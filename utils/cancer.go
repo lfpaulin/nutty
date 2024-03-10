@@ -1,38 +1,27 @@
 package utils
 
 import (
-	"bufio"
-	"cmd/vendor/golang.org/x/sys/unix"
-	"compress/gzip"
-	"log"
-	"os"
-	"sniffles2_helper_go/config"
-	"strings"
+    "fmt"
+    "strings"
+    "sniffles2_helper_go/config"
+    "sniffles2_helper_go/vcf"
 )
 
+
 func ParseCancer(params *config.UserParam) {
-	println("hey ", params.SubCMD)
-	VCFHandler, err := os.Open(params.VCF)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer VCFHandler.Close()
-	isGZ := strings.Contains(params.VCF, "gz")
-	if isGZ {
-		VCFRead, err := gzip.NewReader(VCFHandler)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer VCFRead.Close()
-	} else {
-		VCFRead := bufio.NewScanner(VCFHandler)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer VCFRead.Close()
-	}
-}
-
-func ReaderGZ(*os.File fileHandler){
-
+    VCFReader := vcf.ReadVCF(params.VCF)
+    defer VCFReader.Close()
+    for VCFReader.Scan() {
+        line := strings.TrimSpace(VCFReader.Text())
+        switch {
+        case strings.Contains(line, "##") && strings.Contains(line, "contig"):
+            fmt.Println("contig => ", line)
+        case strings.Contains(line, "##") && strings.Contains(line, "INFO"):
+            fmt.Println("info => ", line)
+        case strings.Contains(line, "##") && strings.Contains(line, "FORMAT"):
+            fmt.Println("format => ", line)
+        default:
+            //
+        }
+    }
 }

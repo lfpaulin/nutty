@@ -37,21 +37,33 @@ func GetParams() UserParam {
 		cancer   string
 		mosaic   bool
 		germline bool
+		help 	 string
 	)
+
+	help = "----------------------------------------\n" +
+		"Sniffles 2 helper\n" +
+		"  Usage: snf2_parse <subcommand> <options>\n  Available subcommands:\n" +
+		"    sv\n" +
+		"    pop\n" +
+		"    cancer\n" +
+		"----------------------------------------"
 
 	if len(os.Args) < 2 {
 		fmt.Println("Please specify a subcommand and parameters")
+		fmt.Println(help)
 		os.Exit(1)
 	}
 	subCMD = os.Args[1]
 	switch subCMD {
+	case "help":
+		fmt.Println(help)
 	case "sv":
 		cmdSVParse := flag.NewFlagSet("sv", flag.ExitOnError)
 		cmdSVParse.StringVar(&vcf, "vcf", "none", "VCF file to read")
 		cmdSVParse.IntVar(&minSupp, "min-supp", 1, "Min. read support for the SV calls, default = 1")
-		cmdSVParse.IntVar(&minSize, "min-size", 1, "Min. SV size, default = 1, in case of BND this is skipped")
+		cmdSVParse.IntVar(&minSize, "min-size", 50, "Min. SV size, default = 1, in case of BND this is skipped")
 		cmdSVParse.StringVar(&filerGT, "filer-gt", "none", "Removed genotypes from output")
-		cmdSVParse.StringVar(&filerBy, "filer-by", "none", "Filter by some parameter:value")
+		cmdSVParse.StringVar(&filerBy, "filer-by", "none:none", "Filter by some parameter:value")
 		cmdSVParse.BoolVar(&asBED, "as-bed", false, "")
 		cmdSVParse.BoolVar(&asDev, "as-dev", false, "")
 		cmdSVParse.Parse(os.Args[2:])
@@ -71,7 +83,7 @@ func GetParams() UserParam {
 		cmdPopParse := flag.NewFlagSet("pop", flag.ExitOnError)
 		cmdPopParse.StringVar(&vcf, "vcf", "none", "VCF file to read")
 		cmdPopParse.IntVar(&minSupp, "min-supp", 1, "Min. support for the SV calls (from SUPP_VEC), default = 1")
-		cmdPopParse.IntVar(&minSize, "min-size", 1, "Min. absolute size of the event (except for BDN), default = 1")
+		cmdPopParse.IntVar(&minSize, "min-size", 50, "Min. absolute size of the event (except for BDN), default = 1")
 		cmdPopParse.BoolVar(&uniq, "uniq", false, "Show only those that appear in a single individual (from SUPP_VEC)")
 		cmdPopParse.BoolVar(&asDev, "as-dev", false, "")
 		cmdPopParse.Parse(os.Args[2:])
