@@ -13,9 +13,11 @@ type UserParam struct {
 	MinSize  int
 	FilerGT  string
 	FilerBy  string
+	FixGT    bool
 	AsBED    bool
 	AsDev    bool
 	Uniq     bool
+	FixSuppVec    bool
 	Cancer   string
 	Mosaic   bool
 	Germline bool
@@ -31,9 +33,11 @@ func GetParams() UserParam {
 		minSize  int
 		filerGT  string
 		filerBy  string
+		fixGT    bool
 		asBED    bool
 		asDev    bool
 		uniq     bool
+		fixSuppVec    bool
 		cancer   string
 		mosaic   bool
 		germline bool
@@ -64,11 +68,12 @@ func GetParams() UserParam {
 		cmdSVParse.IntVar(&minSize, "min-size", 50, "Min. SV size, default = 1, in case of BND this is skipped")
 		cmdSVParse.StringVar(&filerGT, "filer-gt", "none", "Removed genotypes from output")
 		cmdSVParse.StringVar(&filerBy, "filer-by", "none:none", "Filter by some parameter:value")
+		cmdSVParse.BoolVar(&fixGT, "fix-gt", false, "")
 		cmdSVParse.BoolVar(&asBED, "as-bed", false, "")
 		cmdSVParse.BoolVar(&asDev, "as-dev", false, "")
 		cmdSVParse.Parse(os.Args[2:])
 		fmt.Printf("CMD: snf2_parser sv --vcf %s --min-sup %d --min-size %d --filer-gt %s --filer-by %s "+
-			"--as-bed %t --as-dev %t \n", vcf, minSupp, minSize, filerGT, filerBy, asBED, asDev)
+			"--fix-gt %t --as-bed %t --as-dev %t \n", vcf, minSupp, minSize, filerGT, filerBy, fixGT, asBED, asDev)
 		return UserParam{
 			SubCMD:  subCMD,
 			VCF:     vcf,
@@ -76,6 +81,7 @@ func GetParams() UserParam {
 			MinSize: minSize,
 			FilerGT: filerGT,
 			FilerBy: filerBy,
+			FixGT:   fixGT,
 			AsBED:   asBED,
 			AsDev:   asDev,
 		}
@@ -85,16 +91,18 @@ func GetParams() UserParam {
 		cmdPopParse.IntVar(&minSupp, "min-supp", 1, "Min. support for the SV calls (from SUPP_VEC), default = 1")
 		cmdPopParse.IntVar(&minSize, "min-size", 50, "Min. absolute size of the event (except for BDN), default = 1")
 		cmdPopParse.BoolVar(&uniq, "uniq", false, "Show only those that appear in a single individual (from SUPP_VEC)")
+		cmdPopParse.BoolVar(&fixSuppVec, "fix-suppvec", false, "")
 		cmdPopParse.BoolVar(&asDev, "as-dev", false, "")
 		cmdPopParse.Parse(os.Args[2:])
-		fmt.Printf("CMD: snf2_parser pop --vcf %s --min-supp %d --min-size %d --uniq %t --as-dev %t \n",
-			vcf, minSupp, minSize, uniq, asDev)
+		fmt.Printf("CMD: snf2_parser pop --vcf %s --min-supp %d --min-size %d --uniq %t --fix-suppvec %t --as-dev %t\n",
+			vcf, minSupp, minSize, uniq, fixSuppVec, asDev)
 		return UserParam{
 			SubCMD:  subCMD,
 			VCF:     vcf,
 			MinSupp: minSupp,
 			MinSize: minSize,
-			AsBED:   asBED,
+			Uniq:     uniq,
+			FixSuppVec:     fixSuppVec,
 			AsDev:   asDev,
 		}
 	case "cancer":
