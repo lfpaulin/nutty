@@ -7,41 +7,45 @@ import (
 )
 
 type UserParam struct {
-	SubCMD   string
-	VCF      string
-	MinSupp  int
-	MinSize  int
-	FilerGT  string
-	FilerBy  string
-	FixGT    bool
-	AsBED    bool
-	AsDev    bool
-	Uniq     bool
-	FixSuppVec    bool
-	Cancer   string
-	Mosaic   bool
-	Germline bool
+	SubCMD       string
+	VCF          string
+	MinSupp      int
+	MinSize      int
+	MinContigLen int
+	FilerGT      string
+	FilerBy      string
+	FixGT        bool
+	SaveRNames   bool
+	AsBED        bool
+	AsDev        bool
+	Uniq         bool
+	FixSuppVec   bool
+	Cancer       string
+	Mosaic       bool
+	Germline     bool
 }
 
 func GetParams() UserParam {
 	// SV parsing for single sample VCF
 
 	var (
-		subCMD   string
-		vcf      string
-		minSupp  int
-		minSize  int
-		filerGT  string
-		filerBy  string
-		fixGT    bool
-		asBED    bool
-		asDev    bool
-		uniq     bool
-		fixSuppVec    bool
-		cancer   string
-		mosaic   bool
-		germline bool
-		help 	 string
+		subCMD       string
+		vcf          string
+		minSupp      int
+		minSize      int
+		minContigLen int
+		filerGT      string
+		filerBy      string
+		fixGT        bool
+		asBED        bool
+		saveRNames   bool
+		asDev        bool
+		uniq         bool
+		fixSuppVec   bool
+		cancer       string
+		mosaic       bool
+		germline     bool
+		help         string
 	)
 
 	help = "----------------------------------------\n" +
@@ -64,26 +68,34 @@ func GetParams() UserParam {
 	case "sv":
 		cmdSVParse := flag.NewFlagSet("sv", flag.ExitOnError)
 		cmdSVParse.StringVar(&vcf, "vcf", "none", "VCF file to read")
-		cmdSVParse.IntVar(&minSupp, "min-supp", 1, "Min. read support for the SV calls, default = 1")
+		cmdSVParse.IntVar(&minSupp, "min-supp", 10, "Min. read support for the SV calls, default = 10")
 		cmdSVParse.IntVar(&minSize, "min-size", 50, "Min. SV size, default = 1, in case of BND this is skipped")
+		cmdSVParse.IntVar(&minContigLen, "min-contig-len", 2000000, "Min. Contig/Chromosome size to be used, default = 2Mb")
 		cmdSVParse.StringVar(&filerGT, "filer-gt", "none", "Removed genotypes from output")
 		cmdSVParse.StringVar(&filerBy, "filer-by", "none:none", "Filter by some parameter:value")
 		cmdSVParse.BoolVar(&fixGT, "fix-gt", false, "")
+		cmdSVParse.BoolVar(&saveRNames, "save-rnames", false, "")
 		cmdSVParse.BoolVar(&asBED, "as-bed", false, "")
 		cmdSVParse.BoolVar(&asDev, "as-dev", false, "")
-		cmdSVParse.Parse(os.Args[2:])
-		fmt.Printf("CMD: snf2_parser sv --vcf %s --min-sup %d --min-size %d --filer-gt %s --filer-by %s "+
+		err := cmdSVParse.Parse(os.Args[2:])
+		if err != nil {
+			panic(err)
+			return UserParam{}
+		}
+		fmt.Printf("#CMD: snf2_parser sv --vcf %s --min-sup %d --min-size %d --filer-gt %s --filer-by %s "+
 			"--fix-gt %t --as-bed %t --as-dev %t \n", vcf, minSupp, minSize, filerGT, filerBy, fixGT, asBED, asDev)
 		return UserParam{
-			SubCMD:  subCMD,
-			VCF:     vcf,
-			MinSupp: minSupp,
-			MinSize: minSize,
-			FilerGT: filerGT,
-			FilerBy: filerBy,
-			FixGT:   fixGT,
-			AsBED:   asBED,
-			AsDev:   asDev,
+			SubCMD:       subCMD,
+			VCF:          vcf,
+			MinSupp:      minSupp,
+			MinSize:      minSize,
+			MinContigLen: minContigLen,
+			FilerGT:      filerGT,
+			FilerBy:      filerBy,
+			FixGT:        fixGT,
+			SaveRNames:   saveRNames,
+			AsBED:        asBED,
+			AsDev:        asDev,
 		}
 	case "pop":
 		cmdPopParse := flag.NewFlagSet("pop", flag.ExitOnError)
@@ -93,17 +105,21 @@ func GetParams() UserParam {
 		cmdPopParse.BoolVar(&uniq, "uniq", false, "Show only those that appear in a single individual (from SUPP_VEC)")
 		cmdPopParse.BoolVar(&fixSuppVec, "fix-suppvec", false, "")
 		cmdPopParse.BoolVar(&asDev, "as-dev", false, "")
-		cmdPopParse.Parse(os.Args[2:])
-		fmt.Printf("CMD: snf2_parser pop --vcf %s --min-supp %d --min-size %d --uniq %t --fix-suppvec %t --as-dev %t\n",
+		err := cmdPopParse.Parse(os.Args[2:])
+		if err != nil {
+			panic(err)
+			return UserParam{}
+		}
+		fmt.Printf("#CMD: snf2_parser pop --vcf %s --min-supp %d --min-size %d --uniq %t --fix-suppvec %t --as-dev %t\n",
 			vcf, minSupp, minSize, uniq, fixSuppVec, asDev)
 		return UserParam{
-			SubCMD:  subCMD,
-			VCF:     vcf,
-			MinSupp: minSupp,
-			MinSize: minSize,
-			Uniq:     uniq,
-			FixSuppVec:     fixSuppVec,
-			AsDev:   asDev,
+			SubCMD:     subCMD,
+			VCF:        vcf,
+			MinSupp:    minSupp,
+			MinSize:    minSize,
+			Uniq:       uniq,
+			FixSuppVec: fixSuppVec,
+			AsDev:      asDev,
 		}
 	case "cancer":
 		cmdCancerParse := flag.NewFlagSet("cancer", flag.ExitOnError)
@@ -113,8 +129,12 @@ func GetParams() UserParam {
 		cmdCancerParse.BoolVar(&mosaic, "mosaic", false, "Show mosaic calls (5% <= VAF <= 25%")
 		cmdCancerParse.BoolVar(&germline, "germline", false, "Show germline calls (VAF>=25%")
 		cmdCancerParse.BoolVar(&asDev, "as-dev", false, "")
-		cmdCancerParse.Parse(os.Args[2:])
-		fmt.Printf("CMD: snf2_parser cancer --vcf %s --uniq %t --cancer %s --mosaic %t --germline %t --as-dev %t\n",
+		err := cmdCancerParse.Parse(os.Args[2:])
+		if err != nil {
+			panic(err)
+			return UserParam{}
+		}
+		fmt.Printf("#CMD: snf2_parser cancer --vcf %s --uniq %t --cancer %s --mosaic %t --germline %t --as-dev %t\n",
 			vcf, uniq, cancer, mosaic, germline, asDev)
 		return UserParam{
 			SubCMD:   subCMD,
