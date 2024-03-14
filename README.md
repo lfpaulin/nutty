@@ -1,4 +1,4 @@
-# Nutty - a Sniffles companion app
+# Nutty - a [Sniffles](https://github.com/fritzsedlazeck/Sniffles) companion app
 
 ## Required programs (go)
 
