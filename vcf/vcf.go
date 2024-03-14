@@ -3,16 +3,14 @@ package vcf
 import (
 	"bufio"
 	"compress/gzip"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"strings"
 	// "fmt"
 )
-
-// VAFHomRef and VAFHomAlt values are currently fixed and should be changed in the future
-const VAFHomRef float64 = 0.25
-const VAFHomAlt float64 = 0.75
 
 type VCF struct {
 	Contig  string
@@ -24,6 +22,9 @@ type VCF struct {
 	Filter  string
 	Info    map[string]string
 	Samples map[string]map[string]string
+	Start   int
+	End     int
+	EndStr  string
 }
 
 // FileScanner used for file reading
@@ -32,6 +33,11 @@ type FileScanner struct {
 	*bufio.Scanner
 }
 
+// VAFHomRef and VAFHomAlt values are currently fixed and should be changed in the future
+const VAFHomRef float64 = 0.25
+const VAFHomAlt float64 = 0.75
+
+// HeaderOut for parsed output
 const HeaderOut string = "#CONTTIG\tSTART\tEND\tSVTYPE\tSVLEN\tGT\tVAF\tREFC\tALTC\tID"
 const maxCapacity = 512 * 1024
 
@@ -63,6 +69,10 @@ func HeaderRegex(VCFLine string, headerTag string) []string {
 
 func ReadVCF(VCFFile string) *FileScanner {
 	// File handler
+	if _, err := os.Stat(VCFFile); errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("[ERROR]: %v. File %s does not exists\n", err, VCFFile)
+		os.Exit(1)
+	}
 	VCFHandler, err := os.Open(VCFFile)
 	if err != nil {
 		panic(err)

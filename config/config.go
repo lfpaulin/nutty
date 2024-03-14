@@ -7,45 +7,50 @@ import (
 )
 
 type UserParam struct {
-	SubCMD       string
-	VCF          string
-	MinSupp      int
-	MinSize      int
-	MinContigLen int
-	FilerGT      string
-	FilerBy      string
-	FixGT        bool
-	SaveRNames   bool
-	AsBED        bool
-	AsDev        bool
-	Uniq         bool
-	FixSuppVec   bool
-	Cancer       string
-	Mosaic       bool
-	Germline     bool
+	SubCMD        string
+	VCF           string
+	MinSupp       int
+	MinSize       int
+	MinContigLen  int
+	FilerGT       string
+	FilerBy       string
+	FixGT         bool
+	SaveRNames    bool
+	AsBED         bool
+	AsDev         bool
+	Uniq          bool
+	FixSuppVec    bool
+	Cancer        string
+	Mosaic        bool
+	Germline      bool
+	PaperID       string
+	PaperAnalysis string
+	Help          string
 }
 
 func GetParams() UserParam {
 	// SV parsing for single sample VCF
 
 	var (
-		subCMD       string
-		vcf          string
-		minSupp      int
-		minSize      int
-		minContigLen int
-		filerGT      string
-		filerBy      string
-		fixGT        bool
-		asBED        bool
-		saveRNames   bool
-		asDev        bool
-		uniq         bool
-		fixSuppVec   bool
-		cancer       string
-		mosaic       bool
-		germline     bool
-		help         string
+		subCMD        string
+		vcf           string
+		minSupp       int
+		minSize       int
+		minContigLen  int
+		filerGT       string
+		filerBy       string
+		fixGT         bool
+		asBED         bool
+		saveRNames    bool
+		asDev         bool
+		uniq          bool
+		fixSuppVec    bool
+		cancer        string
+		mosaic        bool
+		germline      bool
+		help          string
+		paperID       string
+		paperAnalysis string
 	)
 
 	help = "----------------------------------------\n" +
@@ -54,6 +59,7 @@ func GetParams() UserParam {
 		"    sv\n" +
 		"    pop\n" +
 		"    cancer\n" +
+		"    paper\n" +
 		"----------------------------------------"
 
 	if len(os.Args) < 2 {
@@ -145,8 +151,27 @@ func GetParams() UserParam {
 			Germline: germline,
 			AsDev:    asDev,
 		}
+	case "paper":
+		cmdPapers := flag.NewFlagSet("paper", flag.ExitOnError)
+		cmdPapers.StringVar(&paperID, "paper-id", "0", "Paper ID, see README")
+		cmdPapers.StringVar(&vcf, "vcf", "none", "VCF file to read")
+		cmdPapers.StringVar(&paperAnalysis, "paper-analysis", "none", "Analysis from the paper")
+		err := cmdPapers.Parse(os.Args[2:])
+		if err != nil {
+			panic(err)
+			return UserParam{}
+		}
+		fmt.Printf("#CMD: snf2_parser paper --paper-id %s --vcf %s --paper-analysis %s\n",
+			paperID, vcf, paperAnalysis)
+		return UserParam{
+			SubCMD:        subCMD,
+			VCF:           vcf,
+			PaperID:       paperID,
+			PaperAnalysis: paperAnalysis,
+		}
 	default:
 		fmt.Printf("Unknown subcommand: %s\n", subCMD)
+		fmt.Println(help)
 		os.Exit(1)
 	}
 	return UserParam{

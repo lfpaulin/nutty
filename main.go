@@ -1,8 +1,11 @@
 package main
 
 import (
-	"sniffles2_helper_go/config"
-	"sniffles2_helper_go/utils"
+	"fmt"
+	"nutty/config"
+	"nutty/papers"
+	"nutty/utils"
+	"os"
 )
 
 func main() {
@@ -14,5 +17,10 @@ func main() {
 		utils.ParsePop(&userParsedParams)
 	case "cancer":
 		utils.ParseCancer(&userParsedParams)
+	case "paper":
+		papers.PaperAnalysis(&userParsedParams)
+	default:
+		fmt.Printf("Unknown subcommand: %s\n", userParsedParams.SubCMD)
+		os.Exit(1)
 	}
 }

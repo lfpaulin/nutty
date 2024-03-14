@@ -2,8 +2,8 @@ package utils
 
 import (
 	"fmt"
-	"sniffles2_helper_go/config"
-	"sniffles2_helper_go/vcf"
+	"nutty/config"
+	"nutty/vcf"
 	"strconv"
 	"strings"
 )
@@ -12,6 +12,8 @@ var (
 	infoVCF    []string
 	formatVCF  []string
 	sampleName string
+	info       map[string]string
+	sampleSV   map[string]map[string]string
 )
 var contigsVCF = make(map[string]int)
 
@@ -100,10 +102,11 @@ func ReadVCFEntry(VCFLineRaw string, contigs *map[string]int, sampleName string,
 		}
 		VCFLineFormatted.Info = info
 		// we expect only one sample here, so we only use one
-		sampleSV := make(map[string]map[string]string)
+		sampleSV = make(map[string]map[string]string)
 		formatSplit := strings.Split(lineSplit[8], ":")
 		sampleSVSplit := strings.Split(lineSplit[9], ":")
 		for idx := range formatSplit {
+			sampleSV[sampleName] = make(map[string]string)
 			sampleSV[sampleName][formatSplit[idx]] = sampleSVSplit[idx]
 		}
 		VCFLineFormatted.Samples = sampleSV

@@ -1,2 +1,2 @@
-module sniffles2_helper_go
+module nutty
 go 1.22
