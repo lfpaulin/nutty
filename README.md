@@ -53,7 +53,7 @@ In order to get reproducible results we included a `paper` subcomand that takes 
   and will output the output used for the analysis
 
 ```bash
-nutty paper --cancer-t2t --vcf colo829.vcf.gz --somatic
+nutty paper --cancer-t2t --vcf colo829.vcf.gz --colo829
 ```
 This will output:
 - Supplementary Table 3B if input is colo829_grch38.vcf.gz
