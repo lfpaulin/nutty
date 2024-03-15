@@ -44,10 +44,13 @@ nutty sv --help
 
 ```
 
-
 ### Papers
 In order to get reproducible results we included a `paper` subcomand that takes as input:
 - Paper id
 - VCF input
 - Analysis flag
   and will output the output used for the analysis
+
+---
+
+**Note:** [Nutty is Sniffles friend in HPF](https://happytreefriends.fandom.com/wiki/Sniffles%27_Relationships#Nutty)
