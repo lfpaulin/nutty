@@ -23,6 +23,7 @@ type UserParam struct {
 	Cancer        string
 	Mosaic        bool
 	Germline      bool
+	InfoTag       string
 	PaperID       string
 	PaperAnalysis string
 	Help          string
@@ -48,6 +49,7 @@ func GetParams() UserParam {
 		cancer        string
 		mosaic        bool
 		germline      bool
+		infotag       string
 		help          string
 		paperID       string
 		paperAnalysis string
@@ -81,6 +83,7 @@ func GetParams() UserParam {
 		cmdSVParse.StringVar(&filerBy, "filer-by", "none:none", "Filter by some parameter:value")
 		cmdSVParse.BoolVar(&fixGT, "fix-gt", false, "")
 		cmdSVParse.BoolVar(&saveRNames, "save-rnames", false, "")
+		cmdSVParse.StringVar(&infotag, "info-tag", "none", "Extracts tag from the INFO field")
 		cmdSVParse.BoolVar(&asBED, "as-bed", false, "")
 		cmdSVParse.BoolVar(&asDev, "as-dev", false, "")
 		err := cmdSVParse.Parse(os.Args[2:])
@@ -88,8 +91,10 @@ func GetParams() UserParam {
 			panic(err)
 			return UserParam{}
 		}
-		fmt.Printf("#CMD: snf2_parser sv --vcf %s --min-sup %d --min-size %d --filer-gt %s --filer-by %s "+
-			"--fix-gt %t --as-bed %t --as-dev %t \n", vcf, minSupp, minSize, filerGT, filerBy, fixGT, asBED, asDev)
+		if asDev {
+			fmt.Printf("#CMD: snf2_parser sv --vcf %s --min-sup %d --min-size %d --filer-gt %s --filer-by %s "+
+				"--fix-gt %t --as-bed %t --as-dev %t \n", vcf, minSupp, minSize, filerGT, filerBy, fixGT, asBED, asDev)
+		}
 		return UserParam{
 			SubCMD:       subCMD,
 			VCF:          vcf,
@@ -99,6 +104,7 @@ func GetParams() UserParam {
 			FilerGT:      filerGT,
 			FilerBy:      filerBy,
 			FixGT:        fixGT,
+			InfoTag:      infotag,
 			SaveRNames:   saveRNames,
 			AsBED:        asBED,
 			AsDev:        asDev,

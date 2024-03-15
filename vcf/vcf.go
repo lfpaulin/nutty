@@ -93,3 +93,11 @@ func ReadVCF(VCFFile string) *FileScanner {
 		return &FileScanner{VCFHandler, scanner}
 	}
 }
+
+func ReadVCFStdin() *bufio.Scanner {
+	// File from stdin
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Buffer(buf, maxCapacity)
+	return scanner
+
+}
