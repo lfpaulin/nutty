@@ -51,11 +51,3 @@ In order to get reproducible results we included a `paper` subcomand that takes 
 - VCF input
 - Analysis flag
   and will output the output used for the analysis
-
-```bash
-nutty paper --cancer-t2t --vcf colo829.vcf.gz --colo829
-```
-This will output:
-- Supplementary Table 3B if input is colo829_grch38.vcf.gz
-- Supplementary Table 8B if input is colo829_t2t.vcf.gz
-- Supplementary Table 11B if input is colo829_lifted.vcf.gz
