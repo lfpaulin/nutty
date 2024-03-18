@@ -22,14 +22,15 @@ const minVAFCOLO829 float64 = 0.1 // 10%
 const minVAFPOG float64 = 0.222   // 10%
 
 func CancerT2T(params *config.UserParam) {
-	VCFReader := vcf.ReadVCF(params.VCF)
-	defer func(VCFReader *vcf.FileScanner) {
-		err := VCFReader.Close()
-		if err != nil {
-			fmt.Println("[FAILED] VCFReader.Close()")
-			panic(err)
-		}
-	}(VCFReader)
+	VCFReader := vcf.VCFReaderMaker(params.VCF)
+	if params.VCF != "-" && params.VCF != "stdin"{
+        defer func(VCFReader *vcf.FileScanner) {
+            err := VCFReader.Close()
+            if err != nil {
+                panic(err)
+            }
+        }(VCFReader)
+    }
 	// header metadata needed
 	for VCFReader.Scan() {
 		line := strings.TrimSpace(VCFReader.Text())

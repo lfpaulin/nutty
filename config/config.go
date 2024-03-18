@@ -89,7 +89,6 @@ func GetParams() UserParam {
 		err := cmdSVParse.Parse(os.Args[2:])
 		if err != nil {
 			panic(err)
-			return UserParam{}
 		}
 		if asDev {
 			fmt.Printf("#CMD: snf2_parser sv --vcf %s --min-sup %d --min-size %d --filer-gt %s --filer-by %s "+
@@ -120,7 +119,6 @@ func GetParams() UserParam {
 		err := cmdPopParse.Parse(os.Args[2:])
 		if err != nil {
 			panic(err)
-			return UserParam{}
 		}
 		fmt.Printf("#CMD: snf2_parser pop --vcf %s --min-supp %d --min-size %d --uniq %t --fix-suppvec %t --as-dev %t\n",
 			vcf, minSupp, minSize, uniq, fixSuppVec, asDev)
@@ -144,7 +142,6 @@ func GetParams() UserParam {
 		err := cmdCancerParse.Parse(os.Args[2:])
 		if err != nil {
 			panic(err)
-			return UserParam{}
 		}
 		fmt.Printf("#CMD: snf2_parser cancer --vcf %s --uniq %t --cancer %s --mosaic %t --germline %t --as-dev %t\n",
 			vcf, uniq, cancer, mosaic, germline, asDev)
@@ -165,7 +162,6 @@ func GetParams() UserParam {
 		err := cmdPapers.Parse(os.Args[2:])
 		if err != nil {
 			panic(err)
-			return UserParam{}
 		}
 		fmt.Printf("#CMD: snf2_parser paper --paper-id %s --vcf %s --paper-analysis %s\n",
 			paperID, vcf, paperAnalysis)

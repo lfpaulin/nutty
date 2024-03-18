@@ -8,16 +8,16 @@ import (
 	"strings"
 )
 
-var sampleNames []string
-
 func ParsePop(params *config.UserParam) {
-	VCFReader := vcf.ReadVCF(params.VCF)
-	defer func(VCFReader *vcf.FileScanner) {
-		err := VCFReader.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(VCFReader)
+    VCFReader := vcf.VCFReaderMaker(params.VCF)
+    if params.VCF != "-" && params.VCF != "stdin"{
+        defer func(VCFReader *vcf.FileScanner) {
+            err := VCFReader.Close()
+            if err != nil {
+                panic(err)
+            }
+        }(VCFReader)
+    }
 	// header metadata needed
 	for VCFReader.Scan() {
 		line := strings.TrimSpace(VCFReader.Text())
@@ -50,7 +50,7 @@ func ParsePop(params *config.UserParam) {
 				fmt.Println(vcf.HeaderOut)
 			}
 		case strings.Contains(line, "#"):
-			//
+			// other
 		default:
 			// each entry
 			ReadVCFPopEntry(line, &contigsVCF, &sampleNames, params)
