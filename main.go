@@ -19,8 +19,12 @@ func main() {
 		utils.ParseCancer(&userParsedParams)
 	case "paper":
 		papers.PaperAnalysis(&userParsedParams)
+	case "help":
+		//
+	case "version":
+		//
 	default:
-		fmt.Printf("Unknown subcommand: %s\n", userParsedParams.SubCMD)
+		fmt.Printf("[MAIN] Unknown subcommand: %s\n", userParsedParams.SubCMD)
 		os.Exit(1)
 	}
 }

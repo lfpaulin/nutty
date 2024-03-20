@@ -22,6 +22,8 @@ func PaperAnalysis(params *config.UserParam) {
 				params.PaperID, analysisT2T)
 			os.Exit(1)
 		}
+	case "yeast":
+		YeastSpace(params)
 	default:
 		fmt.Printf("Paper ID %s not known\n.Available paprs are:\n%s", params.PaperID, availablePapers)
 	}

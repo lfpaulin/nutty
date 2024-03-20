@@ -8,29 +8,23 @@ import (
 	"strings"
 )
 
-var (
-	infoVCF     []string
-	formatVCF   []string
-	sampleNames []string
-	info        map[string]string
-	sampleSV    map[string]map[string]string
+const (
+	minReadSomatic int     = 10      // filter
+	minVAFCOLO829  float64 = 0.1     // 10%
+	minVAFPOG      float64 = 0.222   // 10%
+	minContigLen   int     = 2000000 // 2Mb
 )
-var contigsVCF = make(map[string]int)
-
-const minReadSomatic int = 10
-const minVAFCOLO829 float64 = 0.1 // 10%
-const minVAFPOG float64 = 0.222   // 10%
 
 func CancerT2T(params *config.UserParam) {
 	VCFReader := vcf.VCFReaderMaker(params.VCF)
-	if params.VCF != "-" && params.VCF != "stdin"{
-        defer func(VCFReader *vcf.FileScanner) {
-            err := VCFReader.Close()
-            if err != nil {
-                panic(err)
-            }
-        }(VCFReader)
-    }
+	if params.VCF != "-" && params.VCF != "stdin" {
+		defer func(VCFReader *vcf.FileScanner) {
+			err := VCFReader.Close()
+			if err != nil {
+				panic(err)
+			}
+		}(VCFReader)
+	}
 	// header metadata needed
 	for VCFReader.Scan() {
 		line := strings.TrimSpace(VCFReader.Text())
@@ -43,7 +37,7 @@ func CancerT2T(params *config.UserParam) {
 				fmt.Println("[FAILED] strconv.Atoi(contigMatch[2]")
 				panic(err)
 			}
-			if contigSize > params.MinContigLen {
+			if contigSize > minContigLen {
 				contigsVCF[contigName] = contigSize
 			}
 		case strings.Contains(line, "##") && strings.Contains(line, "INFO"):
@@ -78,11 +72,6 @@ func CancerT2T(params *config.UserParam) {
 }
 
 func ReadVCFCOLO829(VCFLineRaw string, contigs *map[string]int, sampleNames *[]string) {
-	var (
-		dr  int
-		dv  int
-		vaf float64
-	)
 	lineSplit := strings.Split(VCFLineRaw, "\t")
 	VCFLineFormatted := new(vcf.VCF)
 	VCFLineFormatted.Contig = lineSplit[0]
@@ -167,9 +156,6 @@ func ReadVCFCOLO829(VCFLineRaw string, contigs *map[string]int, sampleNames *[]s
 
 func ReadVCFPOG(VCFLineRaw string, contigs *map[string]int, sampleNames *[]string) {
 	var (
-		dr  int
-		dv  int
-		vaf float64
 		cdv int
 		cid string
 	)
