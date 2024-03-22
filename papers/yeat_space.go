@@ -215,7 +215,9 @@ func ReadVCFYeastSpace(VCFLineRaw string, contigs *map[string]int, sampleNames *
 				}
 				vafString = fmt.Sprintf("%0.3f", vaf)
 			}
-			if sampleInterestValues.name != sampleName {
+			var mainSampleList = strings.Split(sampleInterestValues.name, "_")
+			var mainSampleName = strings.Join(mainSampleList[:2], "_")
+			if !strings.Contains(sampleName, mainSampleName) {
 				if sampleInterestValues.gt == gt && sampleInterestValues.statSV == statusSV {
 					sampleInterestValues.uniq += 1
 				}

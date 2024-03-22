@@ -31,13 +31,22 @@ func ParsePop(params *config.UserParam) {
 			}
 			if contigSize > params.MinContigLen {
 				contigsVCF[contigName] = contigSize
+				if params.OutputVCF {
+					fmt.Println(line)
+				}
 			}
 		case strings.Contains(line, "##") && strings.Contains(line, "INFO"):
 			infoMatch := vcf.HeaderRegex(line, "info")
 			infoVCF = append(infoVCF, infoMatch[1])
+			if params.OutputVCF {
+				fmt.Println(line)
+			}
 		case strings.Contains(line, "##") && strings.Contains(line, "FORMAT"):
 			formatMatch := vcf.HeaderRegex(line, "format")
 			formatVCF = append(formatVCF, formatMatch[1])
+			if params.OutputVCF {
+				fmt.Println(line)
+			}
 		case strings.Contains(line, "#CHROM"):
 			lineSplit := strings.Split(line, "\t")
 			for _, sample := range lineSplit[9:] {
@@ -45,8 +54,11 @@ func ParsePop(params *config.UserParam) {
 			}
 			sampleNamesInfo := strings.Join(sampleNames, ", ")
 			sampleNamesHeader := strings.Join(sampleNames, "\t")
+			if params.OutputVCF {
+				fmt.Println(line)
+			}
 			// Here goes the parser header
-			if !params.AsBED {
+			if !params.AsBED && !params.OutputVCF {
 				fmt.Println("## Sample names: ", sampleNamesInfo)
 				if !params.Uniq {
 					fmt.Printf("#CHROM\tSTART\tEND\tSVTYPE\tSVLEN\tID\t%s\n", sampleNamesHeader)
@@ -55,7 +67,9 @@ func ParsePop(params *config.UserParam) {
 				}
 			}
 		case strings.Contains(line, "#"):
-			// other
+			if params.OutputVCF {
+				fmt.Println(line)
+			}
 		default:
 			// each entry
 			ReadVCFPopEntry(line, &contigsVCF, &sampleNames, params)
@@ -105,7 +119,8 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 		}
 		var suppVecSum = 0
 		var suppVecUniq = 0
-		for suppVecIdx, suppVecElem := range strings.Split(VCFLineFormatted.Info["SUPP_VEC"], "") {
+		var suppVecArray = strings.Split(VCFLineFormatted.Info["SUPP_VEC"], "")
+		for suppVecIdx, suppVecElem := range suppVecArray {
 			suppVecVal, err := strconv.Atoi(suppVecElem)
 			if err != nil {
 				panic(err)
@@ -134,7 +149,7 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 		if userParams.Uniq && suppVecSum == 1 {
 			sampleNameUniq = (*sampleNames)[suppVecUniq]
 		}
-		for _, sampleName := range *sampleNames {
+		for sid, sampleName := range *sampleNames {
 			if (userParams.Uniq && suppVecSum == 1 && sampleName == sampleNameUniq) || !userParams.Uniq {
 				dr, err = strconv.Atoi(VCFLineFormatted.Samples[sampleName]["DR"])
 				dv, err = strconv.Atoi(VCFLineFormatted.Samples[sampleName]["DV"])
@@ -144,9 +159,11 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 					statusSV = "undefined"
 					gt = "./."
 					vafString = "n/a"
+					suppVecArray[sid] = "0"
 				} else {
 					if vaf >= userParams.MinVAFMosaic {
 						statusSV = "germline"
+						suppVecArray[sid] = "1"
 						if gt == "./." && userParams.FixGT {
 							if vaf > fixHetVAFMin && vaf <= fixAltVAFMin {
 								gt = "0/1"
@@ -158,20 +175,28 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 						}
 					} else if vaf < userParams.MaxVAFMosaic && vaf >= userParams.MinVAFMosaic {
 						statusSV = "mosaic"
+						suppVecArray[sid] = "1"
 						if gt == "./." && userParams.FixGT {
 							gt = "0/0"
 						}
 					} else if vaf < userParams.MinVAFMosaic && vaf > 0.0 {
 						statusSV = "lowVAF"
+						suppVecArray[sid] = "0"
 					} else if vaf == 0.0 {
 						statusSV = "reference"
+						suppVecArray[sid] = "0"
 					} else {
 						statusSV = "undefined"
+						suppVecArray[sid] = "0"
 					}
 					vafString = fmt.Sprintf("%0.3f", vaf)
 				}
 				if userParams.OnlyGT {
-					printOut = fmt.Sprintf("%s", gt)
+					if statusSV == "undefined" {
+						printOut = fmt.Sprintf("%s*", gt)
+					} else {
+						printOut = fmt.Sprintf("%s", gt)
+					}
 				} else {
 					printOut = fmt.Sprintf("%s|%s|%d|%d|%s", gt, vafString, dr, dv, statusSV)
 				}
@@ -180,10 +205,20 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 		}
 		// for printing
 		if (userParams.Uniq && suppVecSum == 1) || !userParams.Uniq {
-			samplePrint = strings.Join(printPopulation, "\t")
-			fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\n", VCFLineFormatted.Contig,
-				VCFLineFormatted.Start, VCFLineFormatted.EndStr, VCFLineFormatted.Info["SVTYPE"],
-				VCFLineFormatted.Info["SVLEN"], VCFLineFormatted.ID, samplePrint)
+			var suppVecOutput string
+			if userParams.FixSuppVec {
+				suppVecOutput = fmt.Sprintf("%s|%s", strings.Join(suppVecArray, ""), VCFLineFormatted.Info["SUPP_VEC"])
+			} else {
+				suppVecOutput = VCFLineFormatted.Info["SUPP_VEC"]
+			}
+			if userParams.OutputVCF {
+				// make info, make samples, make vcf line
+			} else {
+				samplePrint = strings.Join(printPopulation, "\t")
+				fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", VCFLineFormatted.Contig,
+					VCFLineFormatted.Start, VCFLineFormatted.EndStr, VCFLineFormatted.Info["SVTYPE"],
+					VCFLineFormatted.Info["SVLEN"], suppVecOutput, VCFLineFormatted.ID, samplePrint)
+			}
 		}
 	}
 }

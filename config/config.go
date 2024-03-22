@@ -20,6 +20,7 @@ type UserParam struct {
 	FixGT          bool
 	OnlyGT         bool
 	SaveRNames     bool
+	OutputVCF      bool
 	AsBED          bool
 	AsDev          bool
 	Uniq           bool
@@ -49,6 +50,7 @@ func GetParams() UserParam {
 		filerBy        string
 		fixGT          bool
 		onlyGT         bool
+		outputVCF      bool
 		asBED          bool
 		saveRNames     bool
 		asDev          bool
@@ -98,7 +100,7 @@ func GetParams() UserParam {
 		}
 	case "sv":
 		cmdSVParse := flag.NewFlagSet("sv", flag.ExitOnError)
-		cmdSVParse.StringVar(&vcf, "vcf", "none", "VCF file to read")
+		cmdSVParse.StringVar(&vcf, "vcf", "stdin", "VCF file to read")
 		cmdSVParse.IntVar(&minSupp, "min-supp", 10, "Min. read support for the SV calls, default = 10")
 		cmdSVParse.IntVar(&minSize, "min-size", 50, "Min. SV size, default = 1, in case of BND this is skipped")
 		cmdSVParse.IntVar(&minContigLen, "min-contig-len", 2000000, "Min. Contig/Chromosome size to be used, default = 2Mb")
@@ -136,7 +138,7 @@ func GetParams() UserParam {
 		}
 	case "pop":
 		cmdPopParse := flag.NewFlagSet("pop", flag.ExitOnError)
-		cmdPopParse.StringVar(&vcf, "vcf", "none", "VCF file to read")
+		cmdPopParse.StringVar(&vcf, "vcf", "stdin", "VCF file to read")
 		cmdPopParse.IntVar(&minSupp, "min-supp", 1, "Min. support for the SV calls (from SUPP_VEC), default = 1")
 		cmdPopParse.IntVar(&minSize, "min-size", 50, "Min. absolute size of the event (except for BDN), default = 1")
 		cmdPopParse.Float64Var(&minVAFGermline, "min-vaf-germline", 0.25, "Min. VAF considered for a germline SVs, default = 25%")
@@ -145,6 +147,7 @@ func GetParams() UserParam {
 		cmdPopParse.BoolVar(&uniq, "uniq", false, "Show only those that appear in a single individual (from SUPP_VEC)")
 		cmdPopParse.BoolVar(&fixGT, "fix-gt", false, "")
 		cmdPopParse.BoolVar(&fixSuppVec, "fix-suppvec", false, "")
+		cmdPopParse.BoolVar(&outputVCF, "output-vcf", false, "")
 		cmdPopParse.BoolVar(&onlyGT, "only-gt", false, "")
 		cmdPopParse.BoolVar(&asDev, "as-dev", false, "")
 		err := cmdPopParse.Parse(os.Args[2:])
@@ -163,12 +166,13 @@ func GetParams() UserParam {
 			Uniq:           uniq,
 			FixSuppVec:     fixSuppVec,
 			FixGT:          fixGT,
+			OutputVCF:      outputVCF,
 			OnlyGT:         onlyGT,
 			AsDev:          asDev,
 		}
 	case "cancer":
 		cmdCancerParse := flag.NewFlagSet("cancer", flag.ExitOnError)
-		cmdCancerParse.StringVar(&vcf, "vcf", "none", "VCF file to read")
+		cmdCancerParse.StringVar(&vcf, "vcf", "stdin", "VCF file to read")
 		cmdCancerParse.BoolVar(&uniq, "uniq", false, "Show only those that appear in a single individual (from SUPP_VEC)")
 		cmdCancerParse.StringVar(&cancer, "cancer", "none", "SUPP_VEC if the cancer samples")
 		cmdCancerParse.BoolVar(&mosaic, "mosaic", false, "Show mosaic calls (5% <= VAF <= 25%")
@@ -191,7 +195,7 @@ func GetParams() UserParam {
 	case "paper":
 		cmdPapers := flag.NewFlagSet("paper", flag.ExitOnError)
 		cmdPapers.StringVar(&paperID, "paper-id", "0", "Paper ID, see README")
-		cmdPapers.StringVar(&vcf, "vcf", "none", "VCF file to read")
+		cmdPapers.StringVar(&vcf, "vcf", "stdin", "VCF file to read")
 		cmdPapers.StringVar(&paperAnalysis, "paper-analysis", "none", "Analysis from the paper")
 		err := cmdPapers.Parse(os.Args[2:])
 		if err != nil {
