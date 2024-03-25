@@ -78,24 +78,26 @@ func ParsePop(params *config.UserParam) {
 }
 
 func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]string, userParams *config.UserParam) {
-	lineSplit := strings.Split(VCFLineRaw, "\t")
-	VCFLineFormatted := new(vcf.VCF)
-	VCFLineFormatted.Contig = lineSplit[0]
-	if _, ok := (*contigs)[VCFLineFormatted.Contig]; ok {
-		VCFPosInt, err := strconv.Atoi(lineSplit[1])
+	var lineSplit = strings.Split(VCFLineRaw, "\t")
+	var contig = lineSplit[indexChrom]
+	if _, ok := (*contigs)[contig]; ok {
+		var VCFRecord = new(vcf.VCF)
+		VCFRecord.Contig = contig
+		VCFPosInt, err := strconv.Atoi(lineSplit[indexPos])
 		if err != nil {
 			panic(err)
 		}
-		VCFLineFormatted.Pos = VCFPosInt
-		VCFLineFormatted.Start = VCFPosInt
-		VCFLineFormatted.ID = lineSplit[2]
-		VCFLineFormatted.Ref = ""
-		VCFLineFormatted.Alt = ""
-		VCFLineFormatted.Quality = lineSplit[5]
-		VCFLineFormatted.Filter = lineSplit[6]
+		VCFRecord.Pos = VCFPosInt
+		VCFRecord.Start = VCFPosInt
+		VCFRecord.ID = lineSplit[indexID]
+		VCFRecord.Ref = ""
+		VCFRecord.Alt = ""
+		VCFRecord.Quality = lineSplit[indexQual]
+		VCFRecord.Filter = lineSplit[indexFilter]
+		VCFRecord.Format = lineSplit[indexFormat]
 		// split each key=value pair or flag
 		info = make(map[string]string)
-		for _, infoElem := range strings.Split(lineSplit[7], ";") {
+		for _, infoElem := range strings.Split(lineSplit[indexInfo], ";") {
 			if strings.Contains(infoElem, "=") {
 				infoKeyVal := strings.Split(infoElem, "=")
 				info[infoKeyVal[0]] = infoKeyVal[1]
@@ -103,10 +105,10 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 				info[infoElem] = "flag"
 			}
 		}
-		VCFLineFormatted.Info = info
+		VCFRecord.Info = info
 		if info["SVTYPE"] == "BND" {
-			VCFLineFormatted.End = VCFLineFormatted.Start + 1
-			VCFLineFormatted.EndStr = lineSplit[4] // Alt
+			VCFRecord.End = VCFRecord.Start + 1
+			VCFRecord.EndStr = lineSplit[indexAlt] // Alt
 			info["SVLEN"] = "1"
 		} else {
 			end, err := strconv.Atoi(info["END"])
@@ -114,13 +116,13 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 				fmt.Println("[FAILED] strconv.Atoi(info[\"END\"])")
 				panic(err)
 			}
-			VCFLineFormatted.End = end
-			VCFLineFormatted.EndStr = info["END"]
+			VCFRecord.End = end
+			VCFRecord.EndStr = info["END"]
 		}
 		var suppVecSum = 0
 		var suppVecUniq = 0
-		var suppVecArray = strings.Split(VCFLineFormatted.Info["SUPP_VEC"], "")
-		for suppVecIdx, suppVecElem := range suppVecArray {
+		var suppVecArrayUpdate = strings.Split(VCFRecord.Info["SUPP_VEC"], "")
+		for suppVecIdx, suppVecElem := range suppVecArrayUpdate {
 			suppVecVal, err := strconv.Atoi(suppVecElem)
 			if err != nil {
 				panic(err)
@@ -134,62 +136,69 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 		var statusSV string
 		var samplePrint string
 		var printOut string
-		var printPopulation []string
+		var nPop int = len(*sampleNames)
+		var printPopulation = make([]string, nPop, nPop)
 		var sampleNameUniq string
 		sampleSV = make(map[string]map[string]string)
-		formatSplit := strings.Split(lineSplit[8], ":")
+		var formatSplit = strings.Split(VCFRecord.Format, ":")
 		for sidx, sample := range *sampleNames {
-			sampleSVSplit := strings.Split(lineSplit[9+sidx], ":")
+			sampleSVSplit := strings.Split(lineSplit[indexSamples+sidx], ":")
 			sampleSV[sample] = make(map[string]string)
 			for idx := range formatSplit {
 				sampleSV[sample][formatSplit[idx]] = sampleSVSplit[idx]
 			}
 		}
-		VCFLineFormatted.Samples = sampleSV
+		VCFRecord.Samples = sampleSV
 		if userParams.Uniq && suppVecSum == 1 {
 			sampleNameUniq = (*sampleNames)[suppVecUniq]
 		}
 		for sid, sampleName := range *sampleNames {
 			if (userParams.Uniq && suppVecSum == 1 && sampleName == sampleNameUniq) || !userParams.Uniq {
-				dr, err = strconv.Atoi(VCFLineFormatted.Samples[sampleName]["DR"])
-				dv, err = strconv.Atoi(VCFLineFormatted.Samples[sampleName]["DV"])
-				gt = VCFLineFormatted.Samples[sampleName]["GT"]
+				dr, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DR"])
+				dv, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DV"])
+				gt = VCFRecord.Samples[sampleName]["GT"]
 				vaf = float64(dv) / float64(dr+dv)
-				if minCoverage > dr+dv {
-					statusSV = "undefined"
-					gt = "./."
-					vafString = "n/a"
-					suppVecArray[sid] = "0"
-				} else {
-					if vaf >= userParams.MinVAFMosaic {
-						statusSV = "germline"
-						suppVecArray[sid] = "1"
-						if gt == "./." && userParams.FixGT {
-							if vaf > fixHetVAFMin && vaf <= fixAltVAFMin {
-								gt = "0/1"
-							} else if vaf > fixAltVAFMin {
-								gt = "1/1"
-							} else {
-								//
-							}
-						}
-					} else if vaf < userParams.MaxVAFMosaic && vaf >= userParams.MinVAFMosaic {
-						statusSV = "mosaic"
-						suppVecArray[sid] = "1"
-						if gt == "./." && userParams.FixGT {
-							gt = "0/0"
-						}
-					} else if vaf < userParams.MinVAFMosaic && vaf > 0.0 {
-						statusSV = "lowVAF"
-						suppVecArray[sid] = "0"
-					} else if vaf == 0.0 {
-						statusSV = "reference"
-						suppVecArray[sid] = "0"
-					} else {
+				if userParams.FixGT {
+					if minCoverage > dr+dv {
 						statusSV = "undefined"
-						suppVecArray[sid] = "0"
+						gt = "./."
+						vafString = "n/a"
+						suppVecArrayUpdate[sid] = "0"
+					} else {
+						if vaf >= userParams.MinVAFMosaic {
+							statusSV = "germline"
+							suppVecArrayUpdate[sid] = "1"
+							if gt == "./." && userParams.FixGT {
+								if vaf > fixHetVAFMin && vaf <= fixAltVAFMin {
+									gt = "0/1"
+								} else if vaf > fixAltVAFMin {
+									gt = "1/1"
+								} else {
+									//
+								}
+							}
+						} else if vaf < userParams.MaxVAFMosaic && vaf >= userParams.MinVAFMosaic {
+							statusSV = "mosaic"
+							suppVecArrayUpdate[sid] = "1"
+							if gt == "./." && userParams.FixGT {
+								gt = "0/0"
+							}
+						} else if vaf < userParams.MinVAFMosaic && vaf > 0.0 {
+							statusSV = "lowVAF"
+							suppVecArrayUpdate[sid] = "0"
+						} else if vaf == 0.0 {
+							statusSV = "reference"
+							suppVecArrayUpdate[sid] = "0"
+						} else {
+							statusSV = "undefined"
+							suppVecArrayUpdate[sid] = "0"
+						}
+						vafString = fmt.Sprintf("%0.3f", vaf)
 					}
-					vafString = fmt.Sprintf("%0.3f", vaf)
+				}
+				VCFRecord.Samples[sampleName]["GT"] = gt
+				if _, ok := VCFRecord.Info["AF"]; ok {
+					VCFRecord.Info["AF"] = vafString
 				}
 				if userParams.OnlyGT {
 					if statusSV == "undefined" {
@@ -198,26 +207,36 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 						printOut = fmt.Sprintf("%s", gt)
 					}
 				} else {
-					printOut = fmt.Sprintf("%s|%s|%d|%d|%s", gt, vafString, dr, dv, statusSV)
+					if userParams.OutputVCF{
+						// GT:GQ:DR:DV
+						var nFormat = len(formatSplit)
+						var sampleVCFCol = make([]string, nFormat, nFormat)
+						for _, fromatKey := range formatSplit {
+							sampleVCFCol = append(sampleVCFCol, VCFRecord.Samples[sampleName][fromatKey])
+						}
+						printOut = strings.Join(sampleVCFCol, ":")
+					} else {
+						printOut = fmt.Sprintf("%s|%s|%d|%d|%s", gt, vafString, dr, dv, statusSV)
+					}
 				}
 				printPopulation = append(printPopulation, printOut)
 			}
 		}
 		// for printing
 		if (userParams.Uniq && suppVecSum == 1) || !userParams.Uniq {
-			var suppVecOutput string
 			if userParams.FixSuppVec {
-				suppVecOutput = fmt.Sprintf("%s|%s", strings.Join(suppVecArray, ""), VCFLineFormatted.Info["SUPP_VEC"])
-			} else {
-				suppVecOutput = VCFLineFormatted.Info["SUPP_VEC"]
+				VCFRecord.Info["SUPP_VEC"] = fmt.Sprintf("%s", strings.Join(suppVecArrayUpdate, ""))
 			}
+			samplePrint = strings.Join(printPopulation, "\t")
 			if userParams.OutputVCF {
+				// #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT
+				var outputVCFINFO string = lineSplit[indexInfo]
 				// make info, make samples, make vcf line
+				VCFRecord.PrintVCF(&lineSplit[indexRef], &lineSplit[indexAlt], &outputVCFINFO, &samplePrint)
+			} else if userParams.AsBED {
+				VCFRecord.PrintBED()
 			} else {
-				samplePrint = strings.Join(printPopulation, "\t")
-				fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", VCFLineFormatted.Contig,
-					VCFLineFormatted.Start, VCFLineFormatted.EndStr, VCFLineFormatted.Info["SVTYPE"],
-					VCFLineFormatted.Info["SVLEN"], suppVecOutput, VCFLineFormatted.ID, samplePrint)
+				VCFRecord.PrintParsed(&samplePrint)
 			}
 		}
 	}

@@ -20,11 +20,27 @@ type VCF struct {
 	Alt     string
 	Quality string
 	Filter  string
+	Format  string
 	Info    map[string]string
 	Samples map[string]map[string]string
 	Start   int
 	End     int
 	EndStr  string
+}
+
+func (vcf *VCF) PrintVCF(ref *string, alt *string, info *string, sample *string){
+	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Pos, vcf.ID, *ref, *alt, 
+		vcf.Quality, vcf.Filter, *info, vcf.Format, *sample)
+}
+
+func (vcf *VCF) PrintBED(){
+	fmt.Printf("%s\t%d\t%s\t%s\t%s:%s\n", vcf.Contig, vcf.Start, vcf.EndStr, vcf.ID, 
+		vcf.Info["SVTYPE"], vcf.Info["SVLEN"])
+}
+
+func (vcf *VCF) PrintParsed(sample *string){
+	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Start, vcf.EndStr, 
+		vcf.Info["SVTYPE"], vcf.Info["SVLEN"], vcf.Info["SUPP_VEC"], vcf.ID, *sample)
 }
 
 // FileScanner used for file reading

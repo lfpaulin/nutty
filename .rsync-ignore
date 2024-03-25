@@ -1,0 +1,11 @@
+.idea/
+.idea/*
+test/
+test/*
+build.sh
+deploy_cluster.sh
+.git/*
+.git
+.gitignore
+resultadoRsync.txt
+.rsync-ignore

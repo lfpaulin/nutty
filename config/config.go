@@ -118,7 +118,9 @@ func GetParams() UserParam {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdSVParse))
+		if asDev{
+			fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdSVParse))
+		}
 		return UserParam{
 			SubCMD:         subCMD,
 			VCF:            vcf,
@@ -148,13 +150,16 @@ func GetParams() UserParam {
 		cmdPopParse.BoolVar(&fixGT, "fix-gt", false, "")
 		cmdPopParse.BoolVar(&fixSuppVec, "fix-suppvec", false, "")
 		cmdPopParse.BoolVar(&outputVCF, "output-vcf", false, "")
+		cmdPopParse.BoolVar(&asBED, "as-bed", false, "")
 		cmdPopParse.BoolVar(&onlyGT, "only-gt", false, "")
 		cmdPopParse.BoolVar(&asDev, "as-dev", false, "")
 		err := cmdPopParse.Parse(os.Args[2:])
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdPopParse))
+		if asDev{
+			fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdPopParse))
+		}
 		return UserParam{
 			SubCMD:         subCMD,
 			VCF:            vcf,
@@ -164,6 +169,7 @@ func GetParams() UserParam {
 			MinVAFMosaic:   minVAFMosaic,
 			MaxVAFMosaic:   maxVAFMosaic,
 			Uniq:           uniq,
+			AsBED:          asBED,
 			FixSuppVec:     fixSuppVec,
 			FixGT:          fixGT,
 			OutputVCF:      outputVCF,
@@ -182,7 +188,9 @@ func GetParams() UserParam {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdCancerParse))
+		if asDev{
+			fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdCancerParse))
+		}
 		return UserParam{
 			SubCMD:   subCMD,
 			VCF:      vcf,
@@ -201,7 +209,9 @@ func GetParams() UserParam {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdPapers))
+		if asDev{
+			fmt.Printf("## CMD: nutty pop %s \n", FlagsState(cmdPapers))
+		}
 		return UserParam{
 			SubCMD:        subCMD,
 			VCF:           vcf,

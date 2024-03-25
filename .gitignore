@@ -3,3 +3,5 @@
 test/
 test/*
 nutty
+build.sh
+deploy_cluster.sh
