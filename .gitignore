@@ -5,3 +5,5 @@ test/*
 nutty
 build.sh
 deploy_cluster.sh
+deployScriptsBaylor.sh
+resultadoRsync.txt

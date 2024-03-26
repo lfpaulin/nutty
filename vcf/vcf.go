@@ -28,18 +28,18 @@ type VCF struct {
 	EndStr  string
 }
 
-func (vcf *VCF) PrintVCF(ref *string, alt *string, info *string, sample *string){
-	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Pos, vcf.ID, *ref, *alt, 
+func (vcf *VCF) PrintVCF(ref *string, alt *string, info *string, sample *string) {
+	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Pos, vcf.ID, *ref, *alt,
 		vcf.Quality, vcf.Filter, *info, vcf.Format, *sample)
 }
 
-func (vcf *VCF) PrintBED(){
-	fmt.Printf("%s\t%d\t%s\t%s\t%s:%s\n", vcf.Contig, vcf.Start, vcf.EndStr, vcf.ID, 
+func (vcf *VCF) PrintBED() {
+	fmt.Printf("%s\t%d\t%s\t%s\t%s:%s\n", vcf.Contig, vcf.Start, vcf.EndStr, vcf.ID,
 		vcf.Info["SVTYPE"], vcf.Info["SVLEN"])
 }
 
-func (vcf *VCF) PrintParsed(sample *string){
-	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Start, vcf.EndStr, 
+func (vcf *VCF) PrintParsed(sample *string) {
+	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Start, vcf.EndStr,
 		vcf.Info["SVTYPE"], vcf.Info["SVLEN"], vcf.Info["SUPP_VEC"], vcf.ID, *sample)
 }
 
@@ -64,7 +64,7 @@ func HeaderRegex(VCFLine string, headerTag string) []string {
 	if err != nil {
 		panic(err)
 	}
-	infoRegex, err := regexp.Compile("##INFO=<ID=(.*),Number=.*,Type=.*,Description=\".*\">")
+	infoRegex, err := regexp.Compile("##INFO=<ID=(.*),Number=.*,Type=(.*),Description=\".*\">")
 	if err != nil {
 		panic(err)
 	}
@@ -112,16 +112,16 @@ func ReadVCF(VCFFile string) *FileScanner {
 
 func ReadVCFStdin() *FileScanner {
 	// File from stdin
-	var file_in io.Closer
+	var fileIn io.Closer
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Buffer(buf, maxCapacity)
-	return &FileScanner{file_in, scanner}
+	return &FileScanner{fileIn, scanner}
 }
 
-func VCFReaderMaker(VCFFile string) *FileScanner{
+func VCFReaderMaker(VCFFile string) *FileScanner {
 	if VCFFile == "-" || VCFFile == "stdin" {
-        return ReadVCFStdin()
-    } else {
-        return ReadVCF(VCFFile)       
-    }
+		return ReadVCFStdin()
+	} else {
+		return ReadVCF(VCFFile)
+	}
 }
