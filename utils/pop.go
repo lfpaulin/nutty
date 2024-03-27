@@ -157,12 +157,6 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 				dv, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DV"])
 				gt = VCFRecord.Samples[sampleName]["GT"]
 				vaf = float64(dv) / float64(dr+dv)
-				if minCoverage > dr+dv && userParams.FixGT {
-					statusSV = "undefined"
-					gt = "./."
-					vafString = "n/a"
-					suppVecArrayUpdate[sid] = "0"
-				}
 				if vaf >= userParams.MinVAFGermline {
 					statusSV = "germline"
 					suppVecArrayUpdate[sid] = "1"
@@ -188,7 +182,12 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 					statusSV = "reference"
 					suppVecArrayUpdate[sid] = "0"
 				} else {
+					//
+				}
+				if minCoverage > dr+dv && userParams.FixGT {
 					statusSV = "undefined"
+					gt = "./."
+					vafString = "n/a"
 					suppVecArrayUpdate[sid] = "0"
 				}
 				vafString = fmt.Sprintf("%0.3f", vaf)
@@ -208,7 +207,7 @@ func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]
 						}
 						printOut = strings.Join(sampleVCFCol, ":")
 					} else {
-						printOut = fmt.Sprintf("%s|%s|%d|%d|%s|%0.3f", gt, vafString, dr, dv, statusSV, userParams.MinVAFGermline)
+						printOut = fmt.Sprintf("%s,%s,%d,%d,%s", gt, vafString, dr, dv, statusSV)
 					}
 				}
 				printPopulation = append(printPopulation, printOut)
