@@ -53,8 +53,6 @@ type FileScanner struct {
 const VAFHomRef float64 = 0.25
 const VAFHomAlt float64 = 0.75
 
-// HeaderOut for parsed output
-const HeaderOut string = "#CONTTIG\tSTART\tEND\tSVTYPE\tSVLEN\tGT\tVAF\tREFC\tALTC\tID"
 const maxCapacity = 512 * 1024
 
 var buf = make([]byte, maxCapacity)
@@ -118,7 +116,7 @@ func ReadVCFStdin() *FileScanner {
 	return &FileScanner{fileIn, scanner}
 }
 
-func VCFReaderMaker(VCFFile string) *FileScanner {
+func ReaderMaker(VCFFile string) *FileScanner {
 	if VCFFile == "-" || VCFFile == "stdin" {
 		return ReadVCFStdin()
 	} else {

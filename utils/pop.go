@@ -9,7 +9,7 @@ import (
 )
 
 func ParsePop(params *config.UserParam) {
-	VCFReader := vcf.VCFReaderMaker(params.VCF)
+	VCFReader := vcf.ReaderMaker(params.VCF)
 	if params.VCF != "-" && params.VCF != "stdin" {
 		defer func(VCFReader *vcf.FileScanner) {
 			err := VCFReader.Close()
@@ -21,64 +21,17 @@ func ParsePop(params *config.UserParam) {
 	// header metadata needed
 	for VCFReader.Scan() {
 		line := strings.TrimSpace(VCFReader.Text())
-		switch {
-		case strings.Contains(line, "##") && strings.Contains(line, "contig"):
-			contigMatch := vcf.HeaderRegex(line, "contig")
-			contigName := contigMatch[1]
-			contigSize, err := strconv.Atoi(contigMatch[2])
-			if err != nil {
-				panic(err)
-			}
-			if contigSize > params.MinContigLen {
-				contigsVCF[contigName] = contigSize
-				if params.OutputVCF {
-					fmt.Println(line)
-				}
-			}
-		case strings.Contains(line, "##") && strings.Contains(line, "INFO"):
-			infoMatch := vcf.HeaderRegex(line, "info")
-			infoVCF[infoMatch[1]] = infoMatch[2]
-			if params.OutputVCF {
-				fmt.Println(line)
-			}
-		case strings.Contains(line, "##") && strings.Contains(line, "FORMAT"):
-			formatMatch := vcf.HeaderRegex(line, "format")
-			formatVCF = append(formatVCF, formatMatch[1])
-			if params.OutputVCF {
-				fmt.Println(line)
-			}
-		case strings.Contains(line, "#CHROM"):
-			lineSplit := strings.Split(line, "\t")
-			for _, sample := range lineSplit[9:] {
-				sampleNames = append(sampleNames, sample)
-			}
-			sampleNamesInfo := strings.Join(sampleNames, ", ")
-			sampleNamesHeader := strings.Join(sampleNames, "\t")
-			if params.OutputVCF {
-				fmt.Println(line)
-			}
-			// Here goes the parser header
-			if !params.AsBED && !params.OutputVCF {
-				fmt.Println("## Sample names: ", sampleNamesInfo)
-				if !params.Uniq {
-					fmt.Printf("#CHROM\tSTART\tEND\tSVTYPE\tSVLEN\tSUPPVEC\tID\t%s\n", sampleNamesHeader)
-				} else {
-					fmt.Println("#CHROM\tSTART\tEND\tSVTYPE\tSVLEN\tID")
-				}
-			}
-		case strings.Contains(line, "#"):
-			if params.OutputVCF {
-				fmt.Println(line)
-			}
-		default:
+		if strings.Contains(line, "#") {
+			VCFHeader(&line, params)
+		} else {
 			// each entry
-			ReadVCFPopEntry(line, &contigsVCF, &sampleNames, params, &infoVCF)
+			ReadVCFPopEntry(&line, &contigsVCF, &sampleNames, params, &infoVCF)
 		}
 	}
 }
 
-func ReadVCFPopEntry(VCFLineRaw string, contigs *map[string]int, sampleNames *[]string, userParams *config.UserParam, infoVCFHeader *map[string]string) {
-	var lineSplit = strings.Split(VCFLineRaw, "\t")
+func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[]string, userParams *config.UserParam, infoVCFHeader *map[string]string) {
+	var lineSplit = strings.Split(*VCFLineRaw, "\t")
 	var contig = lineSplit[indexChrom]
 	if _, ok := (*contigs)[contig]; ok {
 		var VCFRecord = new(vcf.VCF)

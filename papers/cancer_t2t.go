@@ -16,7 +16,7 @@ const (
 )
 
 func CancerT2T(params *config.UserParam) {
-	VCFReader := vcf.VCFReaderMaker(params.VCF)
+	VCFReader := vcf.ReaderMaker(params.VCF)
 	if params.VCF != "-" && params.VCF != "stdin" {
 		defer func(VCFReader *vcf.FileScanner) {
 			err := VCFReader.Close()

@@ -1,5 +1,13 @@
 package utils
 
+import (
+	"fmt"
+	"nutty/config"
+	"nutty/vcf"
+	"strconv"
+	"strings"
+)
+
 var (
 	formatVCF   []string
 	sampleName  string
@@ -34,3 +42,66 @@ const (
 	indexFormat  int = 8
 	indexSamples int = 9
 )
+
+func VCFHeader(lineHeaderVCF *string, userParams *config.UserParam) {
+	switch {
+	case strings.Contains(*lineHeaderVCF, "##") && strings.Contains(*lineHeaderVCF, "contig"):
+		contigMatch := vcf.HeaderRegex(*lineHeaderVCF, "contig")
+		contigName := contigMatch[1]
+		contigSize, err := strconv.Atoi(contigMatch[2])
+		if err != nil {
+			panic(err)
+		}
+		if contigSize > userParams.MinContigLen {
+			contigsVCF[contigName] = contigSize
+			if userParams.OutputVCF {
+				fmt.Println(*lineHeaderVCF)
+			}
+		}
+	case strings.Contains(*lineHeaderVCF, "##") && strings.Contains(*lineHeaderVCF, "INFO"):
+		infoMatch := vcf.HeaderRegex(*lineHeaderVCF, "info")
+		infoVCF[infoMatch[1]] = infoMatch[2]
+		if userParams.OutputVCF {
+			fmt.Println(*lineHeaderVCF)
+		}
+	case strings.Contains(*lineHeaderVCF, "##") && strings.Contains(*lineHeaderVCF, "FORMAT"):
+		formatMatch := vcf.HeaderRegex(*lineHeaderVCF, "format")
+		formatVCF = append(formatVCF, formatMatch[1])
+		if userParams.OutputVCF {
+			fmt.Println(*lineHeaderVCF)
+		}
+	case strings.Contains(*lineHeaderVCF, "#CHROM"):
+		lineHeaderVCFSplit := strings.Split(*lineHeaderVCF, "\t")
+		for _, sample := range lineHeaderVCFSplit[9:] {
+			sampleNames = append(sampleNames, sample)
+		}
+		sampleNamesInfo := strings.Join(sampleNames, ", ")
+		sampleNamesHeader := strings.Join(sampleNames, "\t")
+		if userParams.OutputVCF {
+			fmt.Println(*lineHeaderVCF)
+		}
+		// Here goes the parser header
+		if !userParams.AsBED && !userParams.OutputVCF {
+			switch userParams.SubCMD {
+			case "sv":
+				fmt.Println("##Sample name: ", sampleNamesInfo)
+				fmt.Println("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tGT\tVAF\tREFC\tALTC\tID")
+			case "pop":
+				fmt.Println("##Sample names: ", sampleNamesInfo)
+				if !userParams.Uniq {
+					fmt.Printf("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tSUPPVEC\tID\t%s\n", sampleNamesHeader)
+				} else {
+					fmt.Println("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tID")
+				}
+			default:
+				//
+			}
+		}
+	case strings.Contains(*lineHeaderVCF, "#"):
+		if userParams.OutputVCF {
+			fmt.Println(*lineHeaderVCF)
+		}
+	default:
+		//
+	}
+}

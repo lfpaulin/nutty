@@ -9,7 +9,7 @@ import (
 )
 
 func ParseSV(params *config.UserParam) {
-	VCFReader := vcf.VCFReaderMaker(params.VCF)
+	VCFReader := vcf.ReaderMaker(params.VCF)
 	if params.VCF != "-" && params.VCF != "stdin" {
 		defer func(VCFReader *vcf.FileScanner) {
 			err := VCFReader.Close()
@@ -21,34 +21,9 @@ func ParseSV(params *config.UserParam) {
 	// header metadata needed
 	for VCFReader.Scan() {
 		line := strings.TrimSpace(VCFReader.Text())
-		switch {
-		case strings.Contains(line, "##") && strings.Contains(line, "contig"):
-			contigMatch := vcf.HeaderRegex(line, "contig")
-			contigName := contigMatch[1]
-			contigSize, err := strconv.Atoi(contigMatch[2])
-			if err != nil {
-				panic(err)
-			}
-			if contigSize > params.MinContigLen {
-				contigsVCF[contigName] = contigSize
-			}
-		case strings.Contains(line, "##") && strings.Contains(line, "INFO"):
-			infoMatch := vcf.HeaderRegex(line, "info")
-			infoVCF[infoMatch[1]] = infoMatch[2]
-		case strings.Contains(line, "##") && strings.Contains(line, "FORMAT"):
-			formatMatch := vcf.HeaderRegex(line, "format")
-			formatVCF = append(formatVCF, formatMatch[1])
-		case strings.Contains(line, "#CHROM"):
-			lineSplit := strings.Split(line, "\t")
-			sampleName = lineSplit[9]
-			// Here goes the parser header
-			if !params.AsBED && params.InfoTag == "none" {
-				fmt.Println("##Sample name: ", sampleName)
-				fmt.Println(vcf.HeaderOut)
-			}
-		case strings.Contains(line, "#"):
-			// other
-		default:
+		if strings.Contains(line, "#") {
+			VCFHeader(&line, params)
+		} else {
 			parseBy := "none"
 			if params.InfoTag != "none" {
 				parseBy = "info_tag"
