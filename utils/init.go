@@ -80,8 +80,8 @@ func VCFHeader(lineHeaderVCF *string, userParams *config.UserParam) {
 		if userParams.OutputVCF {
 			fmt.Println(*lineHeaderVCF)
 		}
-		// Here goes the parser header
-		if !userParams.AsBED && !userParams.OutputVCF {
+		// Here we print the header of the parsed file
+		if !userParams.AsBED && !userParams.OutputVCF && userParams.InfoTag == "" {
 			switch userParams.SubCMD {
 			case "sv":
 				fmt.Println("##Sample name: ", sampleNamesInfo)

@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// var svIDMerge []string
+var svIDMergeCount int
+
 func ParsePop(params *config.UserParam) {
 	VCFReader := vcf.ReaderMaker(params.VCF)
 	if params.VCF != "-" && params.VCF != "stdin" {
@@ -107,7 +110,14 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 		for sid, sampleName := range *sampleNames {
 			if (userParams.Uniq && suppVecSum == 1 && sampleName == sampleNameUniq) || !userParams.Uniq {
 				dr, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DR"])
+				if err != nil {
+					panic(err)
+				}
 				dv, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DV"])
+				if err != nil {
+					panic(err)
+				}
+				svIDMergeCount = len(strings.Split(VCFRecord.Samples[sampleName]["ID"], ","))
 				gt = VCFRecord.Samples[sampleName]["GT"]
 				vaf = float64(dv) / float64(dr+dv)
 				if vaf >= userParams.MinVAFGermline {
@@ -160,7 +170,7 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 						}
 						printOut = strings.Join(sampleVCFCol, ":")
 					} else {
-						printOut = fmt.Sprintf("%s,%s,%d,%d,%s", gt, vafString, dr, dv, statusSV)
+						printOut = fmt.Sprintf("%s,%s,%d,%d,%d,%s", gt, vafString, dr, dv, svIDMergeCount, statusSV)
 					}
 				}
 				printPopulation = append(printPopulation, printOut)
