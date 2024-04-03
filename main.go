@@ -17,6 +17,8 @@ func main() {
 		utils.ParsePop(&userParsedParams)
 	case "cancer":
 		utils.ParseCancer(&userParsedParams)
+	case "ghost":
+		utils.ParsePopSpc(&userParsedParams)
 	case "paper":
 		papers.PaperAnalysis(&userParsedParams)
 	case "help":

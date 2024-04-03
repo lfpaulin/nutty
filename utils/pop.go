@@ -8,9 +8,6 @@ import (
 	"strings"
 )
 
-// var svIDMerge []string
-var svIDMergeCount int
-
 func ParsePop(params *config.UserParam) {
 	VCFReader := vcf.ReaderMaker(params.VCF)
 	if params.VCF != "-" && params.VCF != "stdin" {
@@ -147,7 +144,7 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 				} else {
 					//
 				}
-				if minCoverage > dr+dv && userParams.FixGT {
+				if userParams.MinReadFixGT > dr+dv && userParams.FixGT {
 					statusSV = "undefined"
 					gt = "./."
 					vafString = "n/a"

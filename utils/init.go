@@ -19,17 +19,18 @@ var contigsVCF = make(map[string]int)
 var infoVCF = make(map[string]string)
 
 var (
-	dr        int
-	dv        int
-	vaf       float64
-	gt        string
-	vafString string
+	dr             int
+	dv             int
+	vaf            float64
+	gt             string
+	vafString      string
+	svIDMergeCount int
+	// svIDMerge []string
 )
 
 const (
 	fixHetVAFMin float64 = 0.33
 	fixAltVAFMin float64 = 0.66
-	minCoverage  int     = 5 // do not trust anything below this number of reads
 	// #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT
 	indexChrom   int = 0
 	indexPos     int = 1
@@ -84,21 +85,29 @@ func VCFHeader(lineHeaderVCF *string, userParams *config.UserParam) {
 		if !userParams.AsBED && !userParams.OutputVCF && userParams.InfoTag == "" {
 			switch userParams.SubCMD {
 			case "sv":
-				fmt.Println("##Sample name: ", sampleNamesInfo)
-				fmt.Println("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tGT\tVAF\tREFC\tALTC\tID")
-			case "pop":
-				fmt.Println("##Sample names: ", sampleNamesInfo)
-				if !userParams.Uniq {
-					fmt.Printf("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tSUPPVEC\tID\t%s\n", sampleNamesHeader)
+				if userParams.NoHeader {
+					//
 				} else {
-					fmt.Println("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tID")
+					fmt.Println("##Sample name: ", sampleNamesInfo)
+					fmt.Println("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tGT\tVAF\tREFC\tALTC\tID")
+				}
+			case "pop":
+				if userParams.NoHeader {
+					//
+				} else {
+					fmt.Println("##Sample names: ", sampleNamesInfo)
+					if !userParams.Uniq {
+						fmt.Printf("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tSUPPVEC\tID\t%s\n", sampleNamesHeader)
+					} else {
+						fmt.Println("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tID")
+					}
 				}
 			default:
 				//
 			}
 		}
 	case strings.Contains(*lineHeaderVCF, "#"):
-		if userParams.OutputVCF {
+		if userParams.OutputVCF && !userParams.NoHeader {
 			fmt.Println(*lineHeaderVCF)
 		}
 	default:
