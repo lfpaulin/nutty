@@ -27,38 +27,44 @@ func ParseSV(params *config.UserParam) {
 			parseBy := "none"
 			if params.InfoTag != "none" {
 				parseBy = "info_tag"
+			} else if params.AsBED {
+				parseBy = "bed"
+			} else {
+				//
 			}
 			switch parseBy {
 			case "info_tag":
-				ReadVCFInfo(line, &contigsVCF, params.InfoTag)
+				ReadVCFInfo(&line, &contigsVCF, params.InfoTag)
+			case "bed":
+				ReadVCF2BED(&line, &contigsVCF)
 			default:
-				ReadVCFEntry(line, &contigsVCF, sampleName, params)
+				ReadVCFEntry(&line, &contigsVCF, sampleName, params)
 			}
 		}
 	}
 }
 
-func ReadVCFEntry(VCFLineRaw string, contigs *map[string]int, sampleName string, userParams *config.UserParam) {
+func ReadVCFEntry(VCFLineRaw *string, contigs *map[string]int, sampleName string, userParams *config.UserParam) {
 	var (
 		dr       int
 		dv       int
 		vaf      float64
 		vafPrint float64
 	)
-	lineSplit := strings.Split(VCFLineRaw, "\t")
-	VCFLineFormatted := new(vcf.VCF)
-	VCFLineFormatted.Contig = lineSplit[0]
-	if _, ok := (*contigs)[VCFLineFormatted.Contig]; ok {
+	lineSplit := strings.Split(*VCFLineRaw, "\t")
+	VCFRecord := new(vcf.VCF)
+	VCFRecord.Contig = lineSplit[0]
+	if _, ok := (*contigs)[VCFRecord.Contig]; ok {
 		VCFPosInt, err := strconv.Atoi(lineSplit[1])
 		if err != nil {
 			panic(err)
 		}
-		VCFLineFormatted.Pos = VCFPosInt
-		VCFLineFormatted.ID = lineSplit[2]
-		VCFLineFormatted.Ref = ""
-		VCFLineFormatted.Alt = ""
-		VCFLineFormatted.Quality = lineSplit[5]
-		VCFLineFormatted.Filter = lineSplit[6]
+		VCFRecord.Pos = VCFPosInt
+		VCFRecord.ID = lineSplit[2]
+		VCFRecord.Ref = ""
+		VCFRecord.Alt = ""
+		VCFRecord.Quality = lineSplit[5]
+		VCFRecord.Filter = lineSplit[6]
 		// split each key=value pair or flag
 		info := make(map[string]string)
 		for _, infoElem := range strings.Split(lineSplit[7], ";") {
@@ -76,7 +82,20 @@ func ReadVCFEntry(VCFLineRaw string, contigs *map[string]int, sampleName string,
 				info[infoElem] = "flag"
 			}
 		}
-		VCFLineFormatted.Info = info
+		VCFRecord.Info = info
+		if info["SVTYPE"] == "BND" {
+			VCFRecord.End = VCFRecord.Start + 1
+			VCFRecord.EndStr = lineSplit[indexAlt] // Alt
+			info["SVLEN"] = "1"
+		} else {
+			end, err := strconv.Atoi(info["END"])
+			if err != nil {
+				fmt.Println("[FAILED] strconv.Atoi(info[\"END\"])")
+				panic(err)
+			}
+			VCFRecord.End = end
+			VCFRecord.EndStr = info["END"]
+		}
 		// we expect only one sample here, so we only use one
 		sampleSV = make(map[string]map[string]string)
 		sampleSV[sampleName] = make(map[string]string)
@@ -85,14 +104,14 @@ func ReadVCFEntry(VCFLineRaw string, contigs *map[string]int, sampleName string,
 		for idx := range formatSplit {
 			sampleSV[sampleName][formatSplit[idx]] = sampleSVSplit[idx]
 		}
-		VCFLineFormatted.Samples = sampleSV
+		VCFRecord.Samples = sampleSV
 		// #CONTTIG\tSTART\tEND\tSVTYPE\tSVLEN\tGT\tAF\tREF\tALT\tID
-		dr, err = strconv.Atoi(VCFLineFormatted.Samples[sampleName]["DR"])
-		dv, err = strconv.Atoi(VCFLineFormatted.Samples[sampleName]["DV"])
+		dr, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DR"])
+		dv, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DV"])
 		vaf = float64(dv) / float64(dr+dv)
 		vafPrint = vaf * 100
 		// Fix GT
-		gt := VCFLineFormatted.Samples[sampleName]["GT"]
+		gt := VCFRecord.Samples[sampleName]["GT"]
 		if userParams.FixGT && gt == "./." && dr+dv >= userParams.MinSupp {
 			if vaf <= vcf.VAFHomRef {
 				gt = "0/0"
@@ -105,28 +124,28 @@ func ReadVCFEntry(VCFLineRaw string, contigs *map[string]int, sampleName string,
 			}
 		}
 		if dr+dv >= userParams.MinSupp {
-			fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%0.3f\t%d\t%d\t%s\n", VCFLineFormatted.Contig,
-				VCFLineFormatted.Pos, VCFLineFormatted.Info["END"], VCFLineFormatted.Info["SVTYPE"],
-				VCFLineFormatted.Info["SVLEN"], gt, vafPrint, dr, dv, VCFLineFormatted.ID)
+			fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%0.3f\t%d\t%d\t%s\n", VCFRecord.Contig,
+				VCFRecord.Pos, VCFRecord.Info["END"], VCFRecord.Info["SVTYPE"],
+				VCFRecord.Info["SVLEN"], gt, vafPrint, dr, dv, VCFRecord.ID)
 		}
 	}
 }
 
-func ReadVCFInfo(VCFLineRaw string, contigs *map[string]int, userInfoTag string) {
-	lineSplit := strings.Split(VCFLineRaw, "\t")
-	VCFLineFormatted := new(vcf.VCF)
-	VCFLineFormatted.Contig = lineSplit[0]
-	if _, ok := (*contigs)[VCFLineFormatted.Contig]; ok {
+func ReadVCFInfo(VCFLineRaw *string, contigs *map[string]int, userInfoTag string) {
+	lineSplit := strings.Split(*VCFLineRaw, "\t")
+	VCFRecord := new(vcf.VCF)
+	VCFRecord.Contig = lineSplit[0]
+	if _, ok := (*contigs)[VCFRecord.Contig]; ok {
 		VCFPosInt, err := strconv.Atoi(lineSplit[1])
 		if err != nil {
 			panic(err)
 		}
-		VCFLineFormatted.Pos = VCFPosInt
-		VCFLineFormatted.ID = lineSplit[2]
-		VCFLineFormatted.Ref = ""
-		VCFLineFormatted.Alt = ""
-		VCFLineFormatted.Quality = ""
-		VCFLineFormatted.Filter = lineSplit[6]
+		VCFRecord.Pos = VCFPosInt
+		VCFRecord.ID = lineSplit[2]
+		VCFRecord.Ref = ""
+		VCFRecord.Alt = ""
+		VCFRecord.Quality = ""
+		VCFRecord.Filter = lineSplit[6]
 		// split each key=value pair or flag
 		info := make(map[string]string)
 		for _, infoElem := range strings.Split(lineSplit[7], ";") {
@@ -137,10 +156,52 @@ func ReadVCFInfo(VCFLineRaw string, contigs *map[string]int, userInfoTag string)
 				info[infoElem] = "flag"
 			}
 		}
-		VCFLineFormatted.Info = info
-		if _, ok := VCFLineFormatted.Info[userInfoTag]; ok {
-			fmt.Printf("%s:%d\t%s\t%s\n", VCFLineFormatted.Contig, VCFLineFormatted.Pos,
-				VCFLineFormatted.ID, VCFLineFormatted.Info[userInfoTag])
+		VCFRecord.Info = info
+		if _, ok := VCFRecord.Info[userInfoTag]; ok {
+			fmt.Printf("%s:%d\t%s\t%s\n", VCFRecord.Contig, VCFRecord.Pos,
+				VCFRecord.ID, VCFRecord.Info[userInfoTag])
 		}
+	}
+}
+
+func ReadVCF2BED(VCFLineRaw *string, contigs *map[string]int) {
+	lineSplit := strings.Split(*VCFLineRaw, "\t")
+	VCFRecord := new(vcf.VCF)
+	VCFRecord.Contig = lineSplit[0]
+	if _, ok := (*contigs)[VCFRecord.Contig]; ok {
+		VCFPosInt, err := strconv.Atoi(lineSplit[1])
+		if err != nil {
+			panic(err)
+		}
+		VCFRecord.Pos = VCFPosInt
+		VCFRecord.ID = lineSplit[2]
+		// split each key=value pair or flag
+		var end int = 0
+		var endStr string
+		var svtype string = ""
+		for _, infoElem := range strings.Split(lineSplit[7], ";") {
+			if strings.Contains(infoElem, "=") {
+				infoKeyVal := strings.Split(infoElem, "=")
+				switch infoKeyVal[0]{
+				case "END":
+					endStr = infoKeyVal[1]
+				case "SVTYPE":
+					svtype = infoKeyVal[1]
+				default:
+					//
+				}
+			}
+		}
+		if svtype == "BND" {
+			end = VCFRecord.Pos + 1
+		} else {
+			end, err = strconv.Atoi(endStr)
+			if err != nil {
+				fmt.Println("[FAILED] strconv.Atoi(info -> END)")
+				panic(err)
+			}
+		}
+		fmt.Printf("%s\t%d\t%d\t%s|%s\n", VCFRecord.Contig, VCFRecord.Pos, end,
+			VCFRecord.ID, svtype)
 	}
 }
