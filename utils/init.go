@@ -102,6 +102,8 @@ func VCFHeader(lineHeaderVCF *string, userParams *config.UserParam) {
 						fmt.Println("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tID")
 					}
 				}
+			case "ghost":
+				fmt.Printf("#CONTIG\tSTART\tEND\tSVTYPE\tSVLEN\tSUPPVEC\tCOPY_NUMBER\tID\t%s\n", sampleNamesHeader)
 			default:
 				//
 			}

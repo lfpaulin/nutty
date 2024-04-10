@@ -196,7 +196,7 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 			} else if userParams.AsBED {
 				VCFRecord.PrintBED()
 			} else {
-				VCFRecord.PrintParsed(&samplePrint)
+				VCFRecord.PrintParsedPop(&samplePrint)
 			}
 		}
 	}

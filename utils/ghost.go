@@ -109,7 +109,7 @@ func ReadVCFPopEntrySpc(VCFLineRaw *string, contigs *map[string]int, sampleNames
 			if userParams.AsBED {
 				VCFRecord.PrintBED()
 			} else {
-				VCFRecord.PrintParsed(&samplePrint)
+				VCFRecord.PrintSpectrePop(&samplePrint)
 			}
 		}
 	}

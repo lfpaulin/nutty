@@ -38,9 +38,14 @@ func (vcf *VCF) PrintBED() {
 		vcf.Info["SVTYPE"], vcf.Info["SVLEN"])
 }
 
-func (vcf *VCF) PrintParsed(sample *string) {
+func (vcf *VCF) PrintParsedPop(sample *string) {
 	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Start, vcf.EndStr,
 		vcf.Info["SVTYPE"], vcf.Info["SVLEN"], vcf.Info["SUPP_VEC"], vcf.ID, *sample)
+}
+
+func (vcf *VCF) PrintSpectrePop(sample *string) {
+	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Start, vcf.EndStr, vcf.Info["SVTYPE"],
+		vcf.Info["SVLEN"], vcf.Info["SUPP_VEC"], vcf.Info["CN"], vcf.ID, *sample)
 }
 
 // FileScanner used for file reading

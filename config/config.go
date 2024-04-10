@@ -79,7 +79,7 @@ func GetParams() UserParam {
 		"    pop\n" +
 		"    cancer\n" +
 		"    paper\n" +
-		"	 ghost\n" +
+		"    ghost\n" +
 		"    ~~~~~~~~~~\n" +
 		"    help\n" +
 		"    version\n" +
