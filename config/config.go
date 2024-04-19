@@ -32,6 +32,8 @@ type UserParam struct {
 	Mosaic         bool
 	MinVAFMosaic   float64
 	MaxVAFMosaic   float64
+	QualMinReads   int
+	RmQC           bool
 	InfoTag        string
 	NoHeader       bool
 	PaperID        string
@@ -65,6 +67,8 @@ func GetParams() UserParam {
 		mosaic         bool
 		minVAFMosaic   float64
 		maxVAFMosaic   float64
+		qualMinReads   int
+		rmQC           bool
 		infotag        string
 		noHeader       bool
 		help           string
@@ -116,6 +120,8 @@ func GetParams() UserParam {
 		cmdSVParse.StringVar(&filerBy, "filer-by", "none:none", "Filter by some parameter:value")
 		cmdSVParse.BoolVar(&fixGT, "fix-gt", false, "Updated GT field based on VAF from SAMPLE column")
 		cmdSVParse.IntVar(&minReadFixGT, "min-read-fix-gt", 5, "Min number of reads to update the GT")
+		cmdSVParse.IntVar(&qualMinReads, "min-reads-qual", 5, "Min number of reads to be considered high quality SV")
+		cmdSVParse.BoolVar(&rmQC, "rm-low-qc", false, "Remove entries with low QC")
 		cmdSVParse.BoolVar(&saveRNames, "save-rnames", false, "Save RNAMES from INFO filed, if present")
 		cmdSVParse.BoolVar(&noHeader, "no-header", false, "Do not print header of file")
 		cmdSVParse.StringVar(&infotag, "info-tag", "none", "Extracts tag from the INFO field")
@@ -141,6 +147,8 @@ func GetParams() UserParam {
 			FilerBy:        filerBy,
 			FixGT:          fixGT,
 			MinReadFixGT:   minReadFixGT,
+			QualMinReads:   qualMinReads,
+			RmQC:           rmQC,
 			InfoTag:        infotag,
 			SaveRNames:     saveRNames,
 			NoHeader:       noHeader,
@@ -159,6 +167,8 @@ func GetParams() UserParam {
 		cmdPopParse.BoolVar(&fixGT, "fix-gt", false, "Updated GT field based on VAF from SAMPLE column")
 		cmdPopParse.IntVar(&minReadFixGT, "min-read-fix-gt", 5, "Min number of reads to update the GT")
 		cmdPopParse.BoolVar(&fixSuppVec, "fix-suppvec", false, "Fix the SUPP_VEC based on GT/read counts")
+		cmdPopParse.IntVar(&qualMinReads, "min-reads-qual", 5, "Min number of reads to be considered high quality SV")
+		cmdPopParse.BoolVar(&rmQC, "rm-low-qc", false, "Remove entries with low QC")
 		cmdPopParse.BoolVar(&outputVCF, "output-vcf", false, "Output is VCF")
 		cmdPopParse.BoolVar(&asBED, "as-bed", false, "Output in BED format")
 		cmdPopParse.BoolVar(&onlyGT, "only-gt", false, "Only prints the GT for each sample")
@@ -184,6 +194,8 @@ func GetParams() UserParam {
 			FixSuppVec:     fixSuppVec,
 			FixGT:          fixGT,
 			MinReadFixGT:   minReadFixGT,
+			QualMinReads:   qualMinReads,
+			RmQC:           rmQC,
 			OutputVCF:      outputVCF,
 			OnlyGT:         onlyGT,
 			NoHeader:       noHeader,

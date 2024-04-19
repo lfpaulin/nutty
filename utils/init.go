@@ -59,13 +59,13 @@ func VCFHeader(lineHeaderVCF *string, userParams *config.UserParam) {
 				fmt.Println(*lineHeaderVCF)
 			}
 		}
-	case strings.Contains(*lineHeaderVCF, "##") && strings.Contains(*lineHeaderVCF, "INFO"):
+	case strings.Contains(*lineHeaderVCF, "##") && strings.Contains(*lineHeaderVCF, "INFO="):
 		infoMatch := vcf.HeaderRegex(*lineHeaderVCF, "info")
 		infoVCF[infoMatch[1]] = infoMatch[2]
 		if userParams.OutputVCF {
 			fmt.Println(*lineHeaderVCF)
 		}
-	case strings.Contains(*lineHeaderVCF, "##") && strings.Contains(*lineHeaderVCF, "FORMAT"):
+	case strings.Contains(*lineHeaderVCF, "##") && strings.Contains(*lineHeaderVCF, "FORMAT="):
 		formatMatch := vcf.HeaderRegex(*lineHeaderVCF, "format")
 		formatVCF = append(formatVCF, formatMatch[1])
 		if userParams.OutputVCF {

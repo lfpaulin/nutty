@@ -104,6 +104,8 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 		if userParams.Uniq && suppVecSum == 1 {
 			sampleNameUniq = (*sampleNames)[suppVecUniq]
 		}
+		var lowQualCountVAF = 0
+		var lowQualCountReads = 0
 		for sid, sampleName := range *sampleNames {
 			if (userParams.Uniq && suppVecSum == 1 && sampleName == sampleNameUniq) || !userParams.Uniq {
 				dr, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DR"])
@@ -113,6 +115,9 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 				dv, err = strconv.Atoi(VCFRecord.Samples[sampleName]["DV"])
 				if err != nil {
 					panic(err)
+				}
+				if dr+dv < userParams.QualMinReads {
+					lowQualCountReads += 1
 				}
 				svIDMergeCount = len(strings.Split(VCFRecord.Samples[sampleName]["ID"], ","))
 				gt = VCFRecord.Samples[sampleName]["GT"]
@@ -138,9 +143,11 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 				} else if vaf < userParams.MinVAFMosaic && vaf > 0.0 {
 					statusSV = "lowVAF"
 					suppVecArrayUpdate[sid] = "0"
+					lowQualCountVAF += 1
 				} else if vaf == 0.0 {
 					statusSV = "reference"
 					suppVecArrayUpdate[sid] = "0"
+					lowQualCountVAF += 1 // not low qc but not useful in stats
 				} else {
 					//
 				}
@@ -193,10 +200,15 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 				var outputVCFINFO = strings.Join(outputVCFINFOList, ";")
 				// make info, make samples, make vcf line
 				VCFRecord.PrintVCF(&lineSplit[indexRef], &lineSplit[indexAlt], &outputVCFINFO, &samplePrint)
-			} else if userParams.AsBED {
-				VCFRecord.PrintBED()
+			} else if ((lowQualCountVAF < len(*sampleNames) && lowQualCountReads < len(*sampleNames)) &&
+				userParams.RmQC) || !userParams.RmQC {
+				if userParams.AsBED {
+					VCFRecord.PrintBED()
+				} else {
+					VCFRecord.PrintParsedPop(&samplePrint)
+				}
 			} else {
-				VCFRecord.PrintParsedPop(&samplePrint)
+				//
 			}
 		}
 	}
