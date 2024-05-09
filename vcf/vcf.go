@@ -58,7 +58,7 @@ type FileScanner struct {
 const VAFHomRef float64 = 0.25
 const VAFHomAlt float64 = 0.75
 
-const maxCapacity = 512 * 1024
+const maxCapacity = 2048 * (2048 + 1024) //512 * 1024
 
 var buf = make([]byte, maxCapacity)
 

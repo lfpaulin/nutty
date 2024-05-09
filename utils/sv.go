@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"nutty/config"
 	"nutty/vcf"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -84,17 +85,20 @@ func ReadVCFEntry(VCFLineRaw *string, contigs *map[string]int, sampleName string
 		}
 		VCFRecord.Info = info
 		if info["SVTYPE"] == "BND" {
-			VCFRecord.End = VCFRecord.Start + 1
+			VCFRecord.End = VCFRecord.Pos + 1
 			VCFRecord.EndStr = lineSplit[indexAlt] // Alt
 			info["SVLEN"] = "1"
 		} else {
 			end, err := strconv.Atoi(info["END"])
 			if err != nil {
-				fmt.Println("[FAILED] strconv.Atoi(info[\"END\"])")
-				panic(err)
+				_, _ = fmt.Fprintf(os.Stderr, "[FAILED] strconv.Atoi(info[\"END\"]): %d", end)
+				_, _ = fmt.Fprintf(os.Stderr, "End set to Pos +1")
+				VCFRecord.End = VCFPosInt + 1
+				VCFRecord.EndStr = fmt.Sprintf("%d", VCFRecord.End)
+			} else {
+				VCFRecord.End = end
+				VCFRecord.EndStr = info["END"]
 			}
-			VCFRecord.End = end
-			VCFRecord.EndStr = info["END"]
 		}
 		// we expect only one sample here, so we only use one
 		sampleSV = make(map[string]map[string]string)
@@ -124,8 +128,8 @@ func ReadVCFEntry(VCFLineRaw *string, contigs *map[string]int, sampleName string
 			}
 		}
 		if dr+dv >= userParams.MinSupp {
-			fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%0.3f\t%d\t%d\t%s\n", VCFRecord.Contig,
-				VCFRecord.Pos, VCFRecord.Info["END"], VCFRecord.Info["SVTYPE"],
+			fmt.Printf("%s\t%d\t%d\t%s\t%s\t%s\t%0.3f\t%d\t%d\t%s\n", VCFRecord.Contig,
+				VCFRecord.Pos, VCFRecord.End, VCFRecord.Info["SVTYPE"],
 				VCFRecord.Info["SVLEN"], gt, vafPrint, dr, dv, VCFRecord.ID)
 		}
 	}
@@ -182,7 +186,7 @@ func ReadVCF2BED(VCFLineRaw *string, contigs *map[string]int) {
 		for _, infoElem := range strings.Split(lineSplit[7], ";") {
 			if strings.Contains(infoElem, "=") {
 				infoKeyVal := strings.Split(infoElem, "=")
-				switch infoKeyVal[0]{
+				switch infoKeyVal[0] {
 				case "END":
 					endStr = infoKeyVal[1]
 				case "SVTYPE":
