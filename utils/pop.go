@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"nutty/config"
 	"nutty/vcf"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -66,11 +67,14 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 		} else {
 			end, err := strconv.Atoi(info["END"])
 			if err != nil {
-				fmt.Println("[FAILED] strconv.Atoi(info[\"END\"])")
-				panic(err)
+				_, _ = fmt.Fprintf(os.Stderr, "[FAILED] Atoi(info[\"END\"]) => %d for SV %s, end set to Pos +1\n", 
+								   end, VCFRecord.ID)
+				VCFRecord.End = VCFPosInt + 1
+				VCFRecord.EndStr = fmt.Sprintf("%d", VCFRecord.End)
+			} else {
+				VCFRecord.End = end
+				VCFRecord.EndStr = info["END"]
 			}
-			VCFRecord.End = end
-			VCFRecord.EndStr = info["END"]
 		}
 		var suppVecSum = 0
 		var suppVecUniq = 0
@@ -174,7 +178,8 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 						}
 						printOut = strings.Join(sampleVCFCol, ":")
 					} else {
-						printOut = fmt.Sprintf("%s,%s,%d,%d,%d,%s", gt, vafString, dr, dv, svIDMergeCount, statusSV)
+						//printOut = fmt.Sprintf("%s,%s,%d,%d,%d,%s", gt, vafString, dr, dv, svIDMergeCount, statusSV)
+						printOut = fmt.Sprintf("%s,%s,%d,%d,%s", gt, vafString, dr, dv, statusSV)
 					}
 				}
 				printPopulation = append(printPopulation, printOut)

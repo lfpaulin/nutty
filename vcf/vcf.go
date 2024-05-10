@@ -34,12 +34,12 @@ func (vcf *VCF) PrintVCF(ref *string, alt *string, info *string, sample *string)
 }
 
 func (vcf *VCF) PrintBED() {
-	fmt.Printf("%s\t%d\t%s\t%s\t%s:%s\n", vcf.Contig, vcf.Start, vcf.EndStr, vcf.ID,
+	fmt.Printf("%s\t%d\t%d\t%s\t%s:%s\n", vcf.Contig, vcf.Start, vcf.End, vcf.ID,
 		vcf.Info["SVTYPE"], vcf.Info["SVLEN"])
 }
 
 func (vcf *VCF) PrintParsedPop(sample *string) {
-	fmt.Printf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Start, vcf.EndStr,
+	fmt.Printf("%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\n", vcf.Contig, vcf.Start, vcf.End,
 		vcf.Info["SVTYPE"], vcf.Info["SVLEN"], vcf.Info["SUPP_VEC"], vcf.ID, *sample)
 }
 
