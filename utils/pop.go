@@ -67,8 +67,8 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 		} else {
 			end, err := strconv.Atoi(info["END"])
 			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "[FAILED] Atoi(info[\"END\"]) => %d for SV %s, end set to Pos +1\n", 
-								   end, VCFRecord.ID)
+				_, _ = fmt.Fprintf(os.Stderr, "[FAILED] Atoi(info[\"END\"]) => %d for SV %s, end set to Pos +1\n",
+					end, VCFRecord.ID)
 				VCFRecord.End = VCFPosInt + 1
 				VCFRecord.EndStr = fmt.Sprintf("%d", VCFRecord.End)
 			} else {
@@ -141,6 +141,9 @@ func ReadVCFPopEntry(VCFLineRaw *string, contigs *map[string]int, sampleNames *[
 				} else if vaf < userParams.MaxVAFMosaic && vaf >= userParams.MinVAFMosaic {
 					statusSV = "mosaic"
 					suppVecArrayUpdate[sid] = "1"
+					if userParams.MinReadsMosaic > dv {
+						suppVecArrayUpdate[sid] = "0"
+					}
 					if gt == "./." && userParams.FixGT {
 						gt = "0/0"
 					}

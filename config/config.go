@@ -32,6 +32,7 @@ type UserParam struct {
 	Mosaic         bool
 	MinVAFMosaic   float64
 	MaxVAFMosaic   float64
+	MinReadsMosaic int
 	QualMinReads   int
 	RmQC           bool
 	InfoTag        string
@@ -67,9 +68,10 @@ func GetParams() UserParam {
 		mosaic         bool
 		minVAFMosaic   float64
 		maxVAFMosaic   float64
+		minReadsMosaic int
 		qualMinReads   int
 		rmQC           bool
-		infotag        string
+		infoTag        string
 		noHeader       bool
 		help           string
 		paperID        string
@@ -116,6 +118,7 @@ func GetParams() UserParam {
 		cmdSVParse.Float64Var(&minVAFGermline, "min-vaf-germline", 0.25, "Min. VAF considered for a germline SVs, default = 25%")
 		cmdSVParse.Float64Var(&minVAFMosaic, "min-vaf-mosaic", 0.05, "Min. VAF considered for a mosaic SVs, default = 5%")
 		cmdSVParse.Float64Var(&maxVAFMosaic, "max-vaf-mosaic", 0.25, "Max. VAF considered for a mosaic SVs, default < 25%")
+		cmdSVParse.IntVar(&minReadsMosaic, "min-mosaic-reads", 3, "Minimum number of reads to consider a SV mosaic, default = 3")
 		cmdSVParse.StringVar(&filerGT, "filer-gt", "none", "Removed genotypes from output")
 		cmdSVParse.StringVar(&filerBy, "filer-by", "none:none", "Filter by some parameter:value")
 		cmdSVParse.BoolVar(&fixGT, "fix-gt", false, "Updated GT field based on VAF from SAMPLE column")
@@ -124,7 +127,7 @@ func GetParams() UserParam {
 		cmdSVParse.BoolVar(&rmQC, "rm-low-qc", false, "Remove entries with low QC")
 		cmdSVParse.BoolVar(&saveRNames, "save-rnames", false, "Save RNAMES from INFO filed, if present")
 		cmdSVParse.BoolVar(&noHeader, "no-header", false, "Do not print header of file")
-		cmdSVParse.StringVar(&infotag, "info-tag", "none", "Extracts tag from the INFO field")
+		cmdSVParse.StringVar(&infoTag, "info-tag", "none", "Extracts tag from the INFO field")
 		cmdSVParse.BoolVar(&asBED, "as-bed", false, "Output in BED format")
 		cmdSVParse.BoolVar(&asDev, "as-dev", false, "Output extra logging")
 		err := cmdSVParse.Parse(os.Args[2:])
@@ -142,14 +145,14 @@ func GetParams() UserParam {
 			MinContigLen:   minContigLen,
 			MinVAFGermline: minVAFGermline,
 			MinVAFMosaic:   minVAFMosaic,
-			MaxVAFMosaic:   maxVAFMosaic,
+			MinReadsMosaic: minReadsMosaic,
 			FilerGT:        filerGT,
 			FilerBy:        filerBy,
 			FixGT:          fixGT,
 			MinReadFixGT:   minReadFixGT,
 			QualMinReads:   qualMinReads,
 			RmQC:           rmQC,
-			InfoTag:        infotag,
+			InfoTag:        infoTag,
 			SaveRNames:     saveRNames,
 			NoHeader:       noHeader,
 			AsBED:          asBED,
@@ -163,6 +166,7 @@ func GetParams() UserParam {
 		cmdPopParse.Float64Var(&minVAFGermline, "min-vaf-germline", 0.25, "Min. VAF considered for a germline SVs, default = 25%")
 		cmdPopParse.Float64Var(&minVAFMosaic, "min-vaf-mosaic", 0.05, "Min. VAF considered for a mosaic SVs, default = 5%")
 		cmdPopParse.Float64Var(&maxVAFMosaic, "max-vaf-mosaic", 0.25, "Max. VAF considered for a mosaic SVs, default < 25%")
+		cmdPopParse.IntVar(&minReadsMosaic, "min-mosaic-reads", 3, "Minimum number of reads to consider a SV mosaic, default = 3")
 		cmdPopParse.BoolVar(&uniq, "uniq", false, "Show only those that appear in a single individual (from SUPP_VEC)")
 		cmdPopParse.BoolVar(&fixGT, "fix-gt", false, "Updated GT field based on VAF from SAMPLE column")
 		cmdPopParse.IntVar(&minReadFixGT, "min-read-fix-gt", 5, "Min number of reads to update the GT")
@@ -189,6 +193,7 @@ func GetParams() UserParam {
 			MinVAFGermline: minVAFGermline,
 			MinVAFMosaic:   minVAFMosaic,
 			MaxVAFMosaic:   maxVAFMosaic,
+			MinReadsMosaic: minReadsMosaic,
 			Uniq:           uniq,
 			AsBED:          asBED,
 			FixSuppVec:     fixSuppVec,

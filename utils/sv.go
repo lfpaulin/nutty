@@ -128,9 +128,9 @@ func ReadVCFEntry(VCFLineRaw *string, contigs *map[string]int, sampleName string
 			}
 		}
 		if dr+dv >= userParams.MinSupp {
-			fmt.Printf("%s\t%d\t%d\t%s\t%s\t%s\t%0.3f\t%d\t%d\t%s\n", VCFRecord.Contig,
-				VCFRecord.Pos, VCFRecord.End, VCFRecord.Info["SVTYPE"],
-				VCFRecord.Info["SVLEN"], gt, vafPrint, dr, dv, VCFRecord.ID)
+			fmt.Printf("%s\t%d\t%d\t%s\t%s\t%s\t%0.3f%%\t%d\t%d\t%s\t%s\n", VCFRecord.Contig,
+				VCFRecord.Pos, VCFRecord.End, VCFRecord.Info["SVTYPE"], VCFRecord.Info["SVLEN"],
+				gt, vafPrint, dr, dv, VCFRecord.ID, VCFRecord.Filter)
 		}
 	}
 }
