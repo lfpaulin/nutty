@@ -54,7 +54,7 @@ func GIAB(params *config.UserParam) {
 			// each entry
 			switch params.PaperAnalysis {
 			case "hg008":
-				ReadVCFHG008(line, &contigsVCF, &sampleNames, params)
+				ReadVCFHG008(line, &contigsVCF, &sampleNames)
 			default:
 				fmt.Printf("Paper Analysis %s not known.. exiting", params.PaperAnalysis)
 			}
@@ -86,7 +86,7 @@ func SuppIsTumor(SuppVec string) bool {
 	return isTumorOnly
 }
 
-func ReadVCFHG008(VCFLineRaw string, contigs *map[string]int, sampleNames *[]string, params *config.UserParam) {
+func ReadVCFHG008(VCFLineRaw string, contigs *map[string]int, sampleNames *[]string) {
 	minReadsAlt := 3
 	minReadsTotal := 10
 	lineSplit := strings.Split(VCFLineRaw, "\t")
