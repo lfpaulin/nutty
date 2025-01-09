@@ -5,6 +5,7 @@ import (
 	"nutty/config"
 	"nutty/vcf"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -51,6 +52,7 @@ func ReadVCFEntry(VCFLineRaw *string, contigs *map[string]int, sampleName string
 		dv       int
 		vaf      float64
 		vafPrint float64
+		svID     string
 	)
 	lineSplit := strings.Split(*VCFLineRaw, "\t")
 	VCFRecord := new(vcf.VCF)
@@ -128,9 +130,17 @@ func ReadVCFEntry(VCFLineRaw *string, contigs *map[string]int, sampleName string
 			}
 		}
 		if dr+dv >= userParams.MinSupp {
+			svID = ""
+			if "BND" == VCFRecord.Info["SVTYPE"] {
+				r, _ := regexp.Compile(".*(chr.*:[0-9]+).*")
+				match := r.FindStringSubmatch(VCFRecord.EndStr)
+				svID = fmt.Sprintf("%s,%s", VCFRecord.ID, match[1])
+			} else {
+				svID = VCFRecord.ID
+			}
 			fmt.Printf("%s\t%d\t%d\t%s\t%s\t%s\t%0.3f%%\t%d\t%d\t%s\t%s\n", VCFRecord.Contig,
 				VCFRecord.Pos, VCFRecord.End, VCFRecord.Info["SVTYPE"], VCFRecord.Info["SVLEN"],
-				gt, vafPrint, dr, dv, VCFRecord.ID, VCFRecord.Filter)
+				gt, vafPrint, dr, dv, svID, VCFRecord.Filter)
 		}
 	}
 }
